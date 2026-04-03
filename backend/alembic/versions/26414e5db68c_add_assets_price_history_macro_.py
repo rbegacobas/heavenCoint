@@ -84,34 +84,6 @@ def upgrade() -> None:
         unique=False,
     )
     op.create_table(
-        "users",
-        sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("email", sa.String(length=255), nullable=False),
-        sa.Column("password_hash", sa.String(length=255), nullable=False),
-        sa.Column("full_name", sa.String(length=150), nullable=False),
-        sa.Column("is_active", sa.Boolean(), nullable=False),
-        sa.Column("is_verified", sa.Boolean(), nullable=False),
-        sa.Column("subscription_tier", sa.String(length=20), nullable=False),
-        sa.Column("preferred_language", sa.String(length=5), nullable=False),
-        sa.Column("timezone", sa.String(length=50), nullable=False),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
-        sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_users")),
-    )
-    op.create_index(op.f("ix_users_email"), "users", ["email"], unique=True)
-    op.create_table(
         "price_history",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("time", sa.DateTime(timezone=True), nullable=False),
@@ -138,8 +110,6 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_price_history_time"), table_name="price_history")
     op.drop_index(op.f("ix_price_history_asset_id"), table_name="price_history")
     op.drop_table("price_history")
-    op.drop_index(op.f("ix_users_email"), table_name="users")
-    op.drop_table("users")
     op.drop_index(op.f("ix_macro_indicators_indicator_code"), table_name="macro_indicators")
     op.drop_table("macro_indicators")
     op.drop_index("idx_assets_type", table_name="assets", postgresql_where="is_active = TRUE")
