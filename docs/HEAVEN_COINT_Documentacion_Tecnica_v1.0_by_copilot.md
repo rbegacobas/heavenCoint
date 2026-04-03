@@ -154,7 +154,7 @@ git push origin main                                  # Push a remote
 | Iteración | Estado | Fecha |
 |-----------|--------|-------|
 | Fase 0 — Documentación + Git init | ✅ Completada | 2026-04-03 |
-| Fase 1 — Diseño (modelo datos, API contracts, validaciones) | 🔲 Pendiente | — |
+| Fase 1 — Diseño (modelo datos, API contracts, validaciones) | ✅ Completada | 2026-04-03 |
 | Fase 2 — Scaffold (proyecto base, DB, auth, primer test) | 🔲 Pendiente | — |
 | Fase 3 — Build módulo a módulo (ciclo interno) | 🔲 Pendiente | — |
 | Fase 4 — Integración y testing E2E | 🔲 Pendiente | — |
