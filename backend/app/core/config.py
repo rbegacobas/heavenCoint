@@ -56,6 +56,20 @@ class Settings(BaseSettings):
     def redis_url(self) -> str:
         return f"redis://{self.redis_host}:{self.redis_port}/0"
 
+    # Market Data APIs
+    polygon_api_key: str = ""
+    binance_api_key: str = ""
+    binance_api_secret: str = ""
+
+    # FRED
+    fred_api_key: str = ""
+
+    # LLM
+    openai_api_key: str = ""
+    llm_model: str = "gpt-4o"
+    llm_max_tokens: int = 4096
+    llm_temperature: float = 0.1
+
     # CORS
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
