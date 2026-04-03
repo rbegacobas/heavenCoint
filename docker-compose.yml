@@ -1,0 +1,42 @@
+# ─── HEAVEN COINT — Docker Compose (Development) ─────────────
+# Usage: docker compose up -d
+# Services: PostgreSQL (TimescaleDB), Redis
+
+services:
+  # ─── PostgreSQL + TimescaleDB ──────────────────────────────
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: heavencoint-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-heavencoint}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-heavencoint_dev_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-heavencoint}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-heavencoint}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ─────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: heavencoint-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  redisdata:
