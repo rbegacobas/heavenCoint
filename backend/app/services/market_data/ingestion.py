@@ -6,6 +6,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.redis import redis_client
 from app.models.asset import Asset
 from app.models.macro_indicator import MacroIndicator
@@ -13,19 +14,25 @@ from app.models.price_history import PriceHistory
 from app.services.market_data.binance_client import fetch_crypto_bars
 from app.services.market_data.fred_client import fetch_all_indicators
 from app.services.market_data.polygon_client import fetch_stock_bars
+from app.services.market_data.yfinance_client import fetch_stock_bars_yf
 
 
 async def ingest_price_data(ticker: str, asset_id: str, asset_type: str, db: AsyncSession) -> int:
     """Fetch OHLCV data for an asset and persist to price_history.
 
     Returns the number of bars persisted.
+    Falls back to yfinance for stocks when POLYGON_API_KEY is not configured.
     """
     if asset_type == "crypto":
         bars = await fetch_crypto_bars(ticker)
         source = "binance"
-    else:
+    elif settings.polygon_api_key:
         bars = await fetch_stock_bars(ticker)
         source = "polygon"
+    else:
+        # Free fallback — no API key required
+        bars = await fetch_stock_bars_yf(ticker)
+        source = "yfinance"
 
     if not bars:
         return 0
