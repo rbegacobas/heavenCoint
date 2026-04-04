@@ -13,7 +13,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.redis import redis_client
 from app.models.kpi_snapshot import KpiSnapshot
+from app.models.oscillator_data import OscillatorData
 from app.models.price_history import PriceHistory
+from app.services.quant.oscillators import (
+    OscillatorResult,
+    calculate_intentions,
+    calculate_netbrute,
+    detect_divergence,
+)
 
 
 async def calculate_kpis(ticker: str, asset_id: str, db: AsyncSession) -> dict:
@@ -36,6 +43,7 @@ async def calculate_kpis(ticker: str, asset_id: str, db: AsyncSession) -> dict:
     closes = [float(b.close) for b in bars]
     highs = [float(b.high) for b in bars]
     lows = [float(b.low) for b in bars]
+    volumes = [float(b.volume) for b in bars]
 
     current_price = closes[-1]
 
@@ -93,6 +101,11 @@ async def calculate_kpis(ticker: str, asset_id: str, db: AsyncSession) -> dict:
         elif momentum_value < 0:
             momentum_class = "negative"
 
+    # --- Oscillators (M3) ---
+    netbrute: OscillatorResult = calculate_netbrute(highs, lows, closes, volumes)
+    intentions: OscillatorResult = calculate_intentions(closes)
+    oscillator_divergence = detect_divergence(netbrute, intentions)
+
     # --- Build KPI dict ---
     kpis = {
         "current_price": current_price,
@@ -109,6 +122,21 @@ async def calculate_kpis(ticker: str, asset_id: str, db: AsyncSession) -> dict:
         "trend_134d": trend_134d,
         "trend_50d": trend_50d,
         "trend_divergence": trend_divergence,
+        "netbrute": {
+            "value": netbrute.value,
+            "cross_type": netbrute.cross_type,
+            "zone": netbrute.zone,
+            "observation": netbrute.observation,
+            "confidence_level": netbrute.confidence_level,
+        },
+        "intentions": {
+            "value": intentions.value,
+            "cross_type": intentions.cross_type,
+            "zone": intentions.zone,
+            "observation": intentions.observation,
+            "confidence_level": intentions.confidence_level,
+        },
+        "oscillator_divergence": oscillator_divergence,
     }
 
     # --- Persist to DB ---
@@ -143,6 +171,23 @@ async def calculate_kpis(ticker: str, asset_id: str, db: AsyncSession) -> dict:
         trend_divergence=trend_divergence,
     )
     db.add(snapshot)
+
+    # --- Persist oscillators to DB ---
+    now_utc = datetime.now(UTC)
+    for osc_type, osc in (("NETBRUTE", netbrute), ("INTENTIONS", intentions)):
+        db.add(
+            OscillatorData(
+                time=now_utc,
+                asset_id=asset_id,
+                oscillator_type=osc_type,
+                value=Decimal(str(round(osc.value, 4))),
+                cross_type=osc.cross_type,
+                zone=osc.zone,
+                observation=osc.observation,
+                confidence_level=Decimal(str(round(osc.confidence_level, 2))),
+            )
+        )
+
     await db.flush()
 
     # --- Cache in Redis ---
@@ -169,6 +214,19 @@ async def calculate_kpis(ticker: str, asset_id: str, db: AsyncSession) -> dict:
         val = kpis.get(key)
         if val is not None:
             redis_data[key] = str(round(val, 8)) if isinstance(val, int | float) else str(val)
+
+    # Oscillator fields
+    redis_data["netbrute_value"] = str(netbrute.value)
+    redis_data["netbrute_cross"] = netbrute.cross_type
+    redis_data["netbrute_zone"] = netbrute.zone
+    redis_data["netbrute_observation"] = netbrute.observation
+    redis_data["netbrute_confidence"] = str(netbrute.confidence_level)
+    redis_data["intentions_value"] = str(intentions.value)
+    redis_data["intentions_cross"] = intentions.cross_type
+    redis_data["intentions_zone"] = intentions.zone
+    redis_data["intentions_observation"] = intentions.observation
+    redis_data["intentions_confidence"] = str(intentions.confidence_level)
+    redis_data["oscillator_divergence"] = str(oscillator_divergence).lower()
 
     await redis_client.hset(f"kpi:{ticker}", mapping=redis_data)
     await redis_client.expire(f"kpi:{ticker}", 60)  # 60s TTL

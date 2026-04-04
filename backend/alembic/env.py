@@ -8,6 +8,7 @@ from app.models.asset import Asset  # noqa: F401
 from app.models.base import Base
 from app.models.kpi_snapshot import KpiSnapshot  # noqa: F401
 from app.models.macro_indicator import MacroIndicator  # noqa: F401
+from app.models.oscillator_data import OscillatorData  # noqa: F401
 from app.models.price_history import PriceHistory  # noqa: F401
 from app.models.user import User  # noqa: F401
 
