@@ -63,10 +63,11 @@ async def search_assets(
                 for item in external:
                     if not any(r.ticker == item["ticker"] for r in results):
                         # Persist to local DB for future lookups
+                        # item["type"] can be "stock", "etf", or "forex"
                         asset = await ensure_asset_exists(
                             ticker=item["ticker"],
                             name=item["name"],
-                            asset_type="stock",
+                            asset_type=item.get("type", "stock"),
                             exchange=item.get("exchange"),
                             db=db,
                         )

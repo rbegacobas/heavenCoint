@@ -26,6 +26,10 @@ async def ingest_price_data(ticker: str, asset_id: str, asset_type: str, db: Asy
     if asset_type == "crypto":
         bars = await fetch_crypto_bars(ticker)
         source = "binance"
+    elif asset_type == "forex":
+        # Forex always uses yfinance (_to_yf_ticker maps EURUSD → EURUSD=X internally)
+        bars = await fetch_stock_bars_yf(ticker)
+        source = "yfinance"
     elif settings.polygon_api_key:
         bars = await fetch_stock_bars(ticker)
         source = "polygon"
