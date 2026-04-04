@@ -23,11 +23,16 @@ export function getToken(): string | null {
 
 export function setToken(token: string): void {
   localStorage.setItem("hc_access_token", token);
+  // Also write a cookie so Next.js middleware (Edge runtime) can check auth state.
+  // SameSite=Lax prevents CSRF for normal navigation; not httpOnly so JS can clear it.
+  document.cookie = `hc_auth=1; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
 }
 
 export function clearToken(): void {
   localStorage.removeItem("hc_access_token");
   localStorage.removeItem("hc_refresh_token");
+  // Clear auth cookie
+  document.cookie = "hc_auth=; path=/; max-age=0";
 }
 
 // ── Core fetch ────────────────────────────────────────────────────────────────
