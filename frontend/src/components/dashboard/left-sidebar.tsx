@@ -54,8 +54,9 @@ export default function LeftSidebar() {
   }, []);
 
   function handleSelectTicker(ticker: string) {
+    // Only update the input — do NOT set activeTicker yet.
+    // activeTicker is set only after a successful Analizar (data ingested + KPIs ready).
     setInputValue(ticker);
-    setActiveTicker(ticker);
     setDropdownOpen(false);
   }
 

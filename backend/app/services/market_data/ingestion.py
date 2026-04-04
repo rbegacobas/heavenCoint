@@ -24,8 +24,14 @@ async def ingest_price_data(ticker: str, asset_id: str, asset_type: str, db: Asy
     Falls back to yfinance for stocks when POLYGON_API_KEY is not configured.
     """
     if asset_type == "crypto":
-        bars = await fetch_crypto_bars(ticker)
-        source = "binance"
+        try:
+            bars = await fetch_crypto_bars(ticker)
+            source = "binance"
+        except Exception:
+            # Binance rejected the symbol (e.g. a forex pair saved with wrong type).
+            # Fall back to yfinance so the user still gets data.
+            bars = await fetch_stock_bars_yf(ticker)
+            source = "yfinance"
     elif asset_type == "forex":
         # Forex always uses yfinance (_to_yf_ticker maps EURUSD → EURUSD=X internally)
         bars = await fetch_stock_bars_yf(ticker)
@@ -131,7 +137,7 @@ async def ensure_asset_exists(
     exchange: str | None,
     db: AsyncSession,
 ) -> Asset:
-    """Find or create an asset record. Returns the Asset."""
+    """Find or create an asset record. Updates asset_type if it changed. Returns the Asset."""
     result = await db.execute(select(Asset).where(Asset.ticker == ticker))
     asset = result.scalar_one_or_none()
 
@@ -147,5 +153,9 @@ async def ensure_asset_exists(
         db.add(asset)
         await db.flush()
         await db.refresh(asset)
+    elif asset.asset_type != asset_type:
+        # Correct stale asset_type (e.g. forex saved as crypto or stock previously)
+        asset.asset_type = asset_type
+        await db.flush()
 
     return asset

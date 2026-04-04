@@ -60,7 +60,11 @@ async def fetch_crypto_bars(
 
 
 async def search_crypto_tickers(query: str, limit: int = 10) -> list[dict]:
-    """Search available crypto pairs matching the query."""
+    """Search available crypto pairs matching the query.
+
+    Only matches against the base asset name, not the full symbol string,
+    to avoid false positives like matching "EURUSD" inside "EURUSDT".
+    """
     url = f"{BINANCE_BASE}/api/v3/exchangeInfo"
 
     async with httpx.AsyncClient(timeout=15.0) as client:
@@ -68,13 +72,18 @@ async def search_crypto_tickers(query: str, limit: int = 10) -> list[dict]:
         response.raise_for_status()
         data = response.json()
 
-    query_upper = query.upper()
+    # Normalize query: strip hyphens so "BTC-USD" → "BTC"
+    raw = query.upper().replace("-", "").replace("USD", "").replace("USDT", "")
+    query_clean = raw if raw else query.upper()
+
     results = []
     for sym in data.get("symbols", []):
         if sym["status"] != "TRADING" or not sym["symbol"].endswith("USDT"):
             continue
-        base = sym["baseAsset"]
-        if query_upper in base or query_upper in sym["symbol"]:
+        base = sym["baseAsset"].upper()
+        # Match only on the base asset name (e.g. "BTC"), not the full symbol.
+        # This prevents "EURUSD" matching "EURUSDT" via substring.
+        if query_clean == base or query_clean in base:
             results.append(
                 {
                     "ticker": f"{base}-USD",
