@@ -12,14 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { apiFetch } from "@/lib/api";
-
-type LoginResponse = {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  user: { id: string; email: string; full_name: string };
-};
+import { authApi, setToken } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,12 +27,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const data = await apiFetch<LoginResponse>("/auth/login", {
-        method: "POST",
-        body: { email, password },
-      });
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
+      const data = await authApi.login({ email, password });
+      setToken(data.access_token);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error de autenticación");

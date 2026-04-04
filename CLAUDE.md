@@ -1,7 +1,7 @@
 # HEAVEN COINT — Documentación Técnica Exhaustiva
 
-> **Versión:** 1.1.0 | **Autor:** GitHub Copilot (Claude Opus 4.6) — Rol: Ingeniero de Software Senior + Asesor Financiero NYSE  
-> **Fecha:** 3 de abril de 2026 | **Clasificación:** Confidencial  
+> **Versión:** 2.0.0 | **Autor:** Claude Sonnet 4.6 — Rol: Ingeniero de Software Senior + Asesor Financiero NYSE  
+> **Fecha:** 3 de abril de 2026 (última actualización) | **Clasificación:** Confidencial  
 > **Repo:** `https://github.com/rbegacobas/heavenCoint.git`  
 > **Fuente:** Análisis del archivo `heavenCoint.md` (transcripción del producto de referencia Orion One)
 
@@ -63,36 +63,72 @@ Heaven Coint es una **plataforma cuantitativa de trading profesional** que democ
 | Tablas BD | `snake_case` plural | `kpi_snapshots`, `oscillator_data` |
 | Variables de entorno | `UPPER_SNAKE` | `DATABASE_URL`, `REDIS_URL` |
 
-#### Estructura de Carpetas (Referencia)
+#### Estructura de Carpetas (Actual — v1.5.0)
 
 ```
 heavenCoint/
-├── docs/                          # Documentación (este archivo)
-├── frontend/                      # Next.js 15
+├── docs/                              # Documentación
+│   ├── heavenCoint.md                 # Transcripción producto referencia
+│   ├── HEAVEN_COINT_Documentacion_Tecnica_v1.0_by_copilot.md  # ← ESTE ARCHIVO
+│   └── PHASE_1_DESIGN_ARTIFACTS.md    # Artefactos de diseño (esquema BD, API contracts)
+├── frontend/                          # Next.js 15 + React 19
 │   └── src/
-│       ├── app/                   # App Router (pages, layouts)
-│       ├── components/            # Componentes React
-│       │   ├── ui/                # shadcn/ui base
-│       │   ├── dashboard/         # KPI cards, osciladores
-│       │   ├── assistant/         # Chat UI
-│       │   └── strategy/          # Builder + Checklist
-│       ├── hooks/                 # Custom hooks
-│       ├── lib/                   # Utils, API client, constants
-│       ├── stores/                # Zustand stores
-│       └── types/                 # TypeScript types
-├── backend/                       # FastAPI
-│   └── app/
-│       ├── api/v1/                # Endpoints
-│       ├── core/                  # Config, security, deps
-│       ├── models/                # SQLAlchemy models
-│       ├── schemas/               # Pydantic schemas
-│       ├── services/              # Lógica de negocio
-│       │   ├── oscillators/       # NetBrute, Intenciones
-│       │   └── ...
-│       └── tests/                 # pytest
-├── infrastructure/                # Docker, Traefik, Prometheus
-├── .github/workflows/             # CI/CD
-└── .env.example
+│       ├── app/
+│       │   ├── globals.css            # 24 design tokens (--color-hc-*)
+│       │   ├── layout.tsx             # Root layout (Inter font, lang="es")
+│       │   ├── dashboard/
+│       │   │   ├── layout.tsx         # TickerBar + TopNav + Sidebars + Main
+│       │   │   └── page.tsx           # Renderiza <MainContent />
+│       │   └── (auth)/               # Login, Register
+│       ├── components/
+│       │   ├── ui/                    # shadcn/ui base
+│       │   └── dashboard/            # ✅ 5 componentes desde Penpot
+│       │       ├── ticker-bar.tsx     # Barra ticker scrollable (7 activos)
+│       │       ├── top-nav.tsx        # Nav: logo + bell/moon + avatar
+│       │       ├── left-sidebar.tsx   # Search + Analizar + Recientes
+│       │       ├── main-content.tsx   # Grid KPIs (11 sub-componentes)
+│       │       └── right-sidebar.tsx  # Builder/Pilot tabs + Chat IA
+│       ├── hooks/                     # Custom hooks
+│       ├── lib/                       # Utils, API client, constants
+│       ├── stores/                    # Zustand stores
+│       ├── types/                     # TypeScript types
+│       └── __tests__/                 # Vitest tests
+├── backend/                           # FastAPI + Python 3.12
+│   ├── app/
+│   │   ├── main.py                    # FastAPI app + routers
+│   │   ├── api/v1/
+│   │   │   ├── auth.py               # POST /register, /login
+│   │   │   ├── health.py             # GET /health
+│   │   │   ├── assets.py             # ✅ M1: búsqueda, carga de activos
+│   │   │   ├── macro.py              # ✅ M1: indicadores macro FRED
+│   │   │   └── kpis.py               # ✅ M2: KPIs con cache Redis
+│   │   ├── core/                      # Config, security (JWT+bcrypt), deps
+│   │   ├── models/
+│   │   │   ├── user.py               # Fase 2
+│   │   │   ├── asset.py              # ✅ M1
+│   │   │   ├── price_history.py       # ✅ M1 (TimescaleDB)
+│   │   │   ├── macro_indicator.py     # ✅ M1
+│   │   │   └── kpi_snapshot.py        # ✅ M2
+│   │   ├── schemas/
+│   │   │   └── asset.py              # ✅ M1 Pydantic schemas
+│   │   ├── services/
+│   │   │   ├── market_data/          # ✅ M1 clients
+│   │   │   │   ├── polygon_client.py  # Acciones US (Polygon.io)
+│   │   │   │   ├── binance_client.py  # Crypto (Binance)
+│   │   │   │   ├── fred_client.py     # Macro (FRED API)
+│   │   │   │   └── ingestion.py       # Orquestador de ingesta
+│   │   │   └── quant/                # ✅ M2 motor cuantitativo
+│   │   │       └── __init__.py        # ATR, SMA, volatilidad, momentum
+│   │   └── tests/                    # pytest (21 tests)
+│   ├── alembic/                       # 3 migraciones aplicadas
+│   ├── requirements.txt
+│   └── requirements-dev.txt
+├── infrastructure/
+│   └── docker-compose.yml            # PostgreSQL+TimescaleDB + Redis
+├── .github/workflows/                 # CI: lint + test en cada PR
+├── .env.example                       # Variables documentadas
+├── CLAUDE.md                          # Cerebro persistente (este doc es la fuente)
+└── disenoDashboard.pen                # Diseño Penpot (fuente del dashboard)
 ```
 
 ### Reglas de Negocio Críticas (NO VIOLAR)
@@ -149,16 +185,496 @@ git add -A && git commit -m "feat: descripción"       # Commit convencional
 git push origin main                                  # Push a remote
 ```
 
+### 🚀 Cómo Levantar Todo (Desarrollo)
+
+```bash
+# ─── PASO 1: Bases de datos (desde la raíz del proyecto) ─────
+docker compose up -d
+# Levanta PostgreSQL+TimescaleDB (puerto 5432) y Redis (puerto 6379)
+# Verificar: docker compose ps  →  ambos contenedores "healthy"
+
+# ─── PASO 2: Backend (desde /backend) ────────────────────────
+cd backend
+source .venv/bin/activate
+uvicorn app.main:app --reload --port 8000
+# Verificar: curl http://localhost:8000/api/v1/health
+# Respuesta esperada: {"status":"healthy","checks":{"database":"ok","redis":"ok"}}
+
+# ─── PASO 3: Frontend (desde /frontend, en otra terminal) ────
+cd frontend
+pnpm dev
+# Abre http://localhost:3000/dashboard
+```
+
+**Puertos en uso:**
+| Servicio | Puerto | Contenedor/Proceso |
+|----------|--------|--------------------|
+| PostgreSQL + TimescaleDB | 5432 | `heavencoint-db` |
+| Redis | 6379 | `heavencoint-redis` |
+| FastAPI Backend | 8000 | uvicorn (local) |
+| Next.js Frontend | 3000 | pnpm dev (local) |
+
 ### Estado del Proyecto
 
-| Iteración | Estado | Fecha |
-|-----------|--------|-------|
-| Fase 0 — Documentación + Git init | ✅ Completada | 2026-04-03 |
-| Fase 1 — Diseño (modelo datos, API contracts, validaciones) | ✅ Completada | 2026-04-03 |
-| Fase 2 — Scaffold (proyecto base, DB, auth, primer test) | ✅ Completada | 2026-04-03 |
-| Fase 3 — Build módulo a módulo (ciclo interno) | 🔲 Pendiente | — |
-| Fase 4 — Integración y testing E2E | 🔲 Pendiente | — |
-| Fase 5 — Deploy staging + iteración | 🔲 Pendiente | — |
+| Iteración | Estado | Fecha | Commit |
+|-----------|--------|-------|--------|
+| Fase 0 — Documentación + Git init | ✅ Completada | 2026-04-03 | `0674af3` |
+| Fase 1 — Diseño (modelo datos, API contracts, validaciones) | ✅ Completada | 2026-04-03 | `d4b93e4` |
+| Fase 2 — Scaffold (proyecto base, DB, auth, primer test) | ✅ Completada | 2026-04-03 | `e11df29` |
+| Fase 3 — Build módulo a módulo (ciclo interno) | 🔶 En progreso | — | — |
+| &nbsp;&nbsp;&nbsp;├─ M1 Data Ingestion (Polygon, Binance, FRED) | ✅ Completado | 2026-07-04 | `f1f511f` |
+| &nbsp;&nbsp;&nbsp;├─ M2 Quant Engine (ATR, volatilidad, tendencias) | ✅ Completado | 2026-07-04 | `d7251a3` |
+| &nbsp;&nbsp;&nbsp;├─ M4 Dashboard Frontend (UI estática desde Penpot + fixes layout) | ✅ Completado | 2026-04-03 | `d7251a3`+fixes |
+| &nbsp;&nbsp;&nbsp;├─ **FASE B — Conectar Frontend↔Backend** (SIGUIENTE) | 🔶 En progreso | — | — |
+| &nbsp;&nbsp;&nbsp;├─ M3 Oscillator Engine (NetBrute + Intenciones) | 🔲 Pendiente | — | — |
+| &nbsp;&nbsp;&nbsp;├─ M5 Risk Manager (Position Sizing, stops) | 🔲 Pendiente | — | — |
+| &nbsp;&nbsp;&nbsp;├─ M6 AI Orchestrator (prompt builder, LLM) | 🔲 Pendiente | — | — |
+| &nbsp;&nbsp;&nbsp;├─ M7 Assistant Chat UI | 🔲 Pendiente | — | — |
+| &nbsp;&nbsp;&nbsp;├─ M8 Strategy Builder + Checklist | 🔲 Pendiente | — | — |
+| &nbsp;&nbsp;&nbsp;├─ M9 User Management | 🔲 Pendiente | — | — |
+| &nbsp;&nbsp;&nbsp;└─ M10 Suscripciones + Pagos (Stripe) | 🔲 Pendiente | — | — |
+| Fase 4 — Integración y testing E2E | 🔲 Pendiente | — | — |
+| Fase 5 — Deploy staging + iteración | 🔲 Pendiente | — | — |
+
+**Tests totales:** 22 (21 backend + 1 frontend) — Todos pasando ✅
+
+**Fixes aplicados en M4 (sesión 2026-04-03):**
+- `dashboard/layout.tsx`: `<main>` convertido a `flex flex-col` (bug raíz — sin esto nada scrolleaba)
+- `main-content.tsx`: eliminadas alturas fijas `h-40`/`h-[260px]`, patrón scroll de dos capas
+- `globals.css`: añadido `--color-hc-sidebar-accent: #6366F1`, corregido `--font-mono`
+- Eliminado `sidebar.tsx` (archivo huérfano del scaffold Phase 2)
+
+### Resumen de Implementación por Módulo
+
+#### M1 — Data Ingestion (commit `f1f511f`, 16 archivos, +1111 líneas)
+
+**Modelos SQLAlchemy creados:**
+- `Asset` — activos financieros (ticker, nombre, tipo, exchange, moneda)
+- `PriceHistory` — precios OHLCV históricos (TimescaleDB hypertable)
+- `MacroIndicator` — indicadores macroeconómicos de FRED
+
+**Clientes de APIs externas:**
+- `PolygonClient` — Polygon.io para acciones US (OHLCV, snapshot, búsqueda)
+- `BinanceClient` — Binance para criptomonedas (klines, precio actual)
+- `FREDClient` — Federal Reserve para datos macro (GDP, CPI, desempleo, yield curve, recesión)
+
+**Servicio de orquestación:**
+- `IngestionService` — coordina ingesta completa de un activo: busca/crea en BD, descarga histórico, calcula KPIs
+
+**Endpoints API:**
+- `GET /api/v1/assets/search?q={query}` — búsqueda de activos
+- `POST /api/v1/assets/{ticker}/load` — cargar activo completo
+- `GET /api/v1/assets/{ticker}` — obtener activo por ticker
+- `GET /api/v1/macro/indicators` — indicadores macro actuales
+- `POST /api/v1/macro/refresh` — refrescar datos macro desde FRED
+
+**Tests:** 6 tests unitarios e integración (`test_data_ingestion.py`)
+
+**Migración Alembic:** `26414e5db68c` — tablas `assets`, `price_history`, `macro_indicators`
+
+---
+
+#### M2 — Quant Engine (commit `d7251a3`, 9 archivos, +2009 líneas)
+
+**Modelo SQLAlchemy:**
+- `KpiSnapshot` — snapshot completo de KPIs por activo (precios, ATR, volatilidad, confianza, momentum, tendencias, extra_kpis JSONB)
+
+**Motor de cálculo (`services/quant/`):**
+- ATR-14 (Average True Range de 14 períodos)
+- SMA 50, 134, 200 (Simple Moving Averages)
+- Detección de tendencia por SMA (UP/DOWN/SIDEWAYS)
+- Volatilidad anualizada (desviación estándar × √252)
+- Rango de confianza al 95% (precio ± 1.96 × σ diaria)
+- Momentum (ROC de 14 períodos, clasificado como POSITIVE/NEGATIVE/NEUTRAL)
+- Estado de volatilidad (EXPANSION si vol > 1.2× promedio, CONTRACTION si < 0.8×)
+
+**Caching Redis:**
+- Key: `kpi:{ticker}` con TTL de 60 segundos
+- Lectura cache-first en endpoints GET
+
+**Endpoints API:**
+- `GET /api/v1/kpis/{ticker}` — obtener KPIs (cache Redis → BD si necesario)
+- `POST /api/v1/kpis/{ticker}/refresh` — forzar recálculo completo
+
+**Tests:** 10 tests unitarios e integración (`test_quant_engine.py`)
+
+**Migración Alembic:** `57be196cbe30` — tabla `kpi_snapshots`
+
+---
+
+#### M4 — Dashboard Frontend (rediseño desde archivo Penpot)
+
+**Origen del diseño:** Archivo `disenoDashboard.pen` (Penpot, 3,472 líneas JSON) con diseño profesional completo.
+
+**Design Tokens extraidos (24 colores):**
+```css
+--color-hc-accent-blue: #3B82F6;     --color-hc-accent-cyan: #06B6D4;
+--color-hc-accent-green: #22C55E;     --color-hc-accent-purple: #8B5CF6;
+--color-hc-accent-red: #EF4444;       --color-hc-accent-yellow: #F59E0B;
+--color-hc-bg-card: #FFFFFF;          --color-hc-bg-card-light: #F8F9FC;
+--color-hc-bg-dark: #1B1F3B;          --color-hc-bg-input: #2A2D52;
+--color-hc-bg-sidebar: #1E2148;       --color-hc-bg-ticker: #14172E;
+--color-hc-border-dark: #2A2D52;      --color-hc-border-light: #E5E7EB;
+--color-hc-btn-green: #22C55E;        --color-hc-btn-primary: #6366F1;
+--color-hc-sidebar-accent: #6366F1;   --color-hc-text-dark: #1A1D3A;
+--color-hc-text-muted: #A0A4B8;       --color-hc-text-secondary: #8B8FA3;
+--color-hc-text-white: #FFFFFF;
+```
+
+**Componentes creados:**
+| Componente | Archivo | Descripción |
+|-----------|---------|-------------|
+| `TickerBar` | `components/dashboard/ticker-bar.tsx` | Barra superior 32px con 7 activos en scroll (Bitcoin, GBP/JPY, HCA, PLTR, UBER, Gold, Visa) con % cambio coloreado |
+| `TopNav` | `components/dashboard/top-nav.tsx` | Navegación 48px: "HeavenCoint v2.0" + iconos campana/luna + avatar "Fernando" |
+| `LeftSidebar` | `components/dashboard/left-sidebar.tsx` | Sidebar izquierdo 220px: búsqueda, botón "Analizar con HeavenCoint", 6 análisis recientes con iconos check/x |
+| `MainContent` | `components/dashboard/main-content.tsx` | Grid principal de KPIs: AssetHeader, SituationAnalysis, PriceLevels (R2/R1/Actual/S1), MarketStatus, Seasonality gauge, AtrCard, MomentumCard, ProjectionCard, VolatilityCard, DirectionalCard, NetBrutCard |
+| `RightSidebar` | `components/dashboard/right-sidebar.tsx` | Sidebar derecho 320px: tabs HeavenBuilder/HeavenPilot + chat "Asistente Heaven" + barra de input |
+
+**Layout del Dashboard:**
+```
+┌─────────────────────────────── TickerBar (32px, full-width) ──────────────────────────────┐
+├─────────────────────────────── TopNav (48px, full-width) ─────────────────────────────────┤
+├──────────┬────────────────────────────────────────────────────────────────┬───────────────┤
+│ Left     │                    Main Content                               │    Right      │
+│ Sidebar  │              (KPI Grid + Charts)                              │   Sidebar     │
+│ (220px)  │                                                               │   (320px)     │
+│          │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐        │               │
+│ Search   │  │ Asset    │ │ Situation│ │ Price    │ │ Market   │        │ HeavenBuilder │
+│ Analyze  │  │ Header   │ │ Analysis │ │ Levels   │ │ Status   │        │ HeavenPilot   │
+│ Recent   │  └──────────┘ └──────────┘ └──────────┘ └──────────┘        │               │
+│ analyses │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐        │ Chat          │
+│          │  │ Season.  │ │ ATR      │ │ Momentum │ │ Project. │        │ Asistente     │
+│          │  └──────────┘ └──────────┘ └──────────┘ └──────────┘        │ Heaven        │
+│          │  ┌──────────┐ ┌──────────┐                                   │               │
+│          │  │ Volat.   │ │ NetBrut  │                                   │ [Input bar]   │
+│          │  └──────────┘ └──────────┘                                   │               │
+├──────────┴────────────────────────────────────────────────────────────────┴───────────────┤
+```
+
+**Fuente:** Inter (reemplaza Geist/Geist_Mono del scaffold)
+
+**Archivos modificados:**
+- `frontend/src/app/globals.css` — 24 design tokens como CSS custom properties
+- `frontend/src/app/layout.tsx` — fuente Inter, lang="es"
+- `frontend/src/app/dashboard/layout.tsx` — layout completo con 5 componentes
+- `frontend/src/app/dashboard/page.tsx` — renderiza `<MainContent />`
+- `frontend/src/__tests__/dashboard.test.tsx` — actualizado para nueva UI
+
+---
+
+### Migraciones Alembic (3 aplicadas)
+
+| ID | Descripción | Tablas |
+|----|-------------|--------|
+| `66ba73ca262f` | Create users table | `users` |
+| `26414e5db68c` | Add assets, price_history, macro_indicators | `assets`, `price_history`, `macro_indicators` |
+| `57be196cbe30` | Add kpi_snapshots | `kpi_snapshots` |
+
+---
+
+## 🗺️ MASTER PLAN DE EJECUCIÓN — v2.0
+
+> **Principio rector:** El LLM nunca hace cálculos matemáticos. Python calcula, el LLM narra.  
+> **Regla de oro:** Un endpoint / un componente / una migración a la vez. Nunca "hacer todo el módulo".  
+> **Orden:** B → C → D → E → F → G → H. Cada fase desbloquea la siguiente.
+
+---
+
+### FASE B — Conectar Frontend ↔ Backend 🔶 EN PROGRESO
+
+> **Objetivo:** Eliminar todos los datos hardcodeados del dashboard. Al escribir un ticker y pulsar "Analizar", el dashboard muestra datos reales desde la API.  
+> **Resultado verificable:** AAPL real → ATR, volatilidad, momentum, tendencias reales en pantalla.
+
+#### B1 — API Client + TypeScript Types
+- **Archivo:** `frontend/src/lib/api.ts`
+- Clase `ApiClient` con `baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'`
+- Métodos: `searchAssets(q: string)`, `loadAsset(ticker: string)`, `getKpiSnapshot(ticker: string)`, `getMacroIndicators()`
+- Manejo de errores uniforme: `ApiError` con `status` y `message`
+- **Archivo:** `frontend/src/types/api.ts`
+- Interfaces TypeScript espejo de los schemas Pydantic del backend:
+  ```ts
+  interface KpiSnapshot { ticker, currentPrice, atrValue, volatilityImplied,
+    volatilityState, volatilityChangePct, priceRangeLow95, priceRangeHigh95,
+    momentumValue, momentumClass, trend200d, trend134d, trend50d,
+    trendDivergence, calculatedAt }
+  interface AssetSearchResult { ticker, name, assetType, exchange }
+  interface MacroIndicators { gdp, cpi, unemploymentRate, recessionProbability,
+    economicCyclePhase, yieldCurveSpread, fedFundsRate }
+  ```
+
+#### B2 — Zustand Store
+- **Archivo:** `frontend/src/stores/asset-store.ts`
+- Estado: `{ activeTicker: string | null, kpiSnapshot: KpiSnapshot | null, isLoading: boolean, error: string | null }`
+- Acciones: `setActiveTicker`, `setKpiSnapshot`, `setLoading`, `setError`, `reset`
+- **Nota:** Solo 1 activo a la vez (RN-7). Si cambia ticker → reset automático del snapshot anterior.
+
+#### B3 — TanStack Query Setup + Hooks
+- **Archivo:** `frontend/src/lib/query-client.ts` — instancia de `QueryClient` con defaults
+- **Archivo:** `frontend/src/app/layout.tsx` — añadir `<QueryClientProvider>`
+- **Archivo:** `frontend/src/hooks/use-kpi-snapshot.ts`
+  - `useKpiSnapshot(ticker)` → `useQuery({ queryKey: ['kpi', ticker], queryFn: ... })`
+  - `staleTime: 30_000` (30s), `refetchInterval: 60_000` (60s polling)
+- **Archivo:** `frontend/src/hooks/use-asset-search.ts`
+  - `useAssetSearch(query)` → `useQuery` con debounce 300ms
+
+#### B4 — LeftSidebar: Search + Analyze Button funcionales
+- **Archivo:** `frontend/src/components/dashboard/left-sidebar.tsx`
+- Input controlado → llama `useAssetSearch` mientras el usuario escribe
+- Dropdown de resultados bajo el input (máx 5 resultados)
+- Al seleccionar o pulsar Enter → `setActiveTicker` en store
+- Botón "Analizar con HeavenCoint" → llama `POST /api/v1/assets/{ticker}/load`
+- Loading state en el botón mientras carga
+- Counter "Te quedan X llamadas" — hardcodeado de momento (M9 lo conectará)
+- Tests: `left-sidebar.test.tsx` — simular búsqueda + selección
+
+#### B5 — MainContent: Datos Reales
+- **Archivo:** `frontend/src/components/dashboard/main-content.tsx`
+- Leer `kpiSnapshot` del store con `useAssetStore`
+- Si `kpiSnapshot === null` → mostrar `<EmptyState />` (instrucciones para buscar activo)
+- Si `isLoading` → mostrar skeletons en cada card
+- Cada sub-componente recibe props tipadas (no lee store directamente → testeable)
+- Reemplazar todos los valores hardcodeados:
+  - `AssetHeader`: `{snapshot.ticker}`, fecha desde `calculatedAt`
+  - `AtrCard`: `{snapshot.atrValue}`, badge dinámico según volatility state
+  - `MomentumCard`: `{snapshot.momentumValue}`, `{snapshot.momentumClass}`
+  - `VolatilityCard`: `{snapshot.volatilityImplied}`, `{snapshot.volatilityChangePct}`
+  - `DirectionalCard`: `{snapshot.trend50d}`, `{snapshot.trend134d}`
+  - `ProjectionCard`: `{snapshot.currentPrice}`, precio proyectado (currentPrice × 1.0425 placeholder hasta M3)
+- **Nota crítica:** `SituationAnalysis`, `MarketStatus`, `NetBrutCard` usan datos de osciladores → mantienen mock data hasta que M3 esté listo. Marcar con `// TODO: M3` comment.
+
+#### B6 — Estados Globales: Loading / Error / Empty
+- **Archivo:** `frontend/src/components/dashboard/empty-state.tsx`
+- Pantalla vacía cuando no hay activo cargado: icono + "Busca un activo para comenzar"
+- **Archivo:** `frontend/src/components/dashboard/error-banner.tsx`
+- Banner rojo superior: "⚠️ Datos no actualizados desde {timestamp}. No opere." (RN de caso de borde)
+- Skeleton loaders en cada card (Tailwind `animate-pulse`)
+
+#### B7 — Tests Actualizados
+- Actualizar `dashboard.test.tsx`: testear con snapshot mockeado real (no datos hardcodeados)
+- Añadir test de `EmptyState` cuando `kpiSnapshot === null`
+- **Target:** ≥ 4 tests frontend pasando
+
+---
+
+### FASE C — M3 Oscillator Engine 🔲 PENDIENTE
+
+> **Objetivo:** Implementar NetBrute e Intenciones con algoritmos propios. Mostrarlos en el dashboard.  
+> **Algoritmos decididos:**
+> - **NetBrute** = Chaikin Money Flow (CMF-14) × 100. Rango -100 a +100.  
+>   Cruce alcista = CMF cruza de negativo a positivo. Cruce bajista = viceversa.  
+>   Zonas: < -25 = sobreventa, -25 a 0 = bajista, 0 a 25 = alcista, > 25 = sobrecompra.  
+>   Confianza = `min(100, abs(cmf_value) * 2 + 25)`
+> - **Intenciones** = RSI(14) normalizado + signo de Momentum(14).  
+>   Estado: RSI < 30 = BUY (pánico extremo), RSI > 70 = SELL (sobrecompra), 30-70 = HOLD.  
+>   Zona: igual que RSI. Confianza = distancia al centro (50) normalizada × 2.
+
+#### C1 — Modelo OscillatorData
+- **Archivo:** `backend/app/models/oscillator_data.py`
+- Campos: `id, asset_id (FK), oscillator_type (ENUM: NETBRUTE|INTENTIONS), value DECIMAL(10,4),`
+  `cross_type (ENUM: BULLISH|BEARISH|NONE), zone (TEXT), confidence_level DECIMAL(5,2),`
+  `observation (TEXT), calculated_at (TimescaleDB column)`
+- Relación: `Asset.oscillator_data` (one-to-many)
+- **Migración:** `alembic revision --autogenerate -m "add oscillator_data"`
+
+#### C2 — NetBrute: Chaikin Money Flow
+- **Archivo:** `backend/app/services/quant/oscillators.py`
+- Función: `calculate_netbrute(highs, lows, closes, volumes, period=14) -> OscillatorResult`
+- Fórmula CMF: `sum((2C-H-L)/(H-L) × V, N) / sum(V, N)`
+- Detectar cruce: comparar sign(cmf[-1]) vs sign(cmf[-2])
+- Zona automática según umbrales definidos
+- Observación: texto descriptivo determinista (no IA) según zona + cruce
+- Tests: 5 tests unitarios con datos sintéticos conocidos
+
+#### C3 — Intenciones: RSI + Momentum
+- **Función:** `calculate_intentions(closes, rsi_period=14, momentum_period=14) -> OscillatorResult`
+- RSI Wilder: `100 - (100 / (1 + avg_gain/avg_loss))`
+- Estado BUY/SELL/HOLD según umbrales
+- Observación determinista según estado
+- Tests: 5 tests unitarios
+
+#### C4 — Integrar en QuantEngine
+- Llamar a ambos osciladores desde `calculate_kpis()`
+- Persistir en `oscillator_data` tabla
+- Incluir en snapshot Redis: `kpi:{ticker}` → añadir campos `netbrute` y `intentions`
+
+#### C5 — Endpoint Osciladores
+- **Archivo:** `backend/app/api/v1/oscillators.py`
+- `GET /api/v1/oscillators/{ticker}` → retorna NetBrute + Intenciones + divergencia
+- Divergencia: `netbrute.cross_type != intentions.state` → `divergence: true`
+- Actualizar `/api/v1/kpis/{ticker}` para incluir osciladores en respuesta
+
+#### C6 — Frontend: NetBrut y MarketStatus con datos reales
+- Actualizar `main-content.tsx`: `NetBrutCard` y `MarketStatus` leen osciladores del store
+- Añadir `oscillatorData` al Zustand store
+- Actualizar `useKpiSnapshot` para incluir osciladores
+- Eliminar todos los `// TODO: M3` comments
+
+---
+
+### FASE D — M5 Risk Manager 🔲 PENDIENTE
+
+> **Objetivo:** El sistema calcula position sizing, SL y TPs matemáticamente. **Python calcula, no el LLM.**  
+> **Fórmulas (RN-2, RN-3, RN-4):**
+> ```
+> SL = entry - (ATR × 2.5)
+> TP1 = entry + (ATR × 1.5) → vender 33%
+> TP2 = entry + (ATR × 2.5) → vender 33%
+> TP3 = trailing stop: max_price - (ATR × 2.0) → mantener 34%
+> N_shares = (capital × risk_pct) / (entry - SL)
+> RR = (TP2 - entry) / (entry - SL)  → debe ser ≥ 2.0
+> ```
+
+#### D1 — RiskManager Service
+- **Archivo:** `backend/app/services/risk_manager.py`
+- Clase `RiskManager` con método `calculate_strategy(ticker, direction, capital, risk_pct) -> StrategyResult`
+- `StrategyResult`: entry, sl, tp1, tp2, tp3_trailing_mult, n_shares, risk_amount, rr_ratio, is_recommended
+- Validaciones: `risk_pct ≤ 0.03` (RN-1), `rr_ratio ≥ 2.0` o marcar `is_recommended=False` (RN-5)
+- Tests: 8 tests unitarios (incluyendo edge cases: capital insuficiente, ATR=0, RR<2)
+
+#### D2 — StrategyResult Model + Migration
+- **Archivo:** `backend/app/models/strategy.py` — tabla `strategies`
+- **Migración:** `alembic revision --autogenerate -m "add strategies"`
+
+#### D3 — Endpoint Strategy
+- **Archivo:** `backend/app/api/v1/strategies.py`
+- `POST /api/v1/strategies/calculate` → body: `{ticker, direction, capital, risk_pct}`
+- Respuesta: `StrategyResult` completo con todos los niveles
+- `GET /api/v1/strategies/{ticker}/last` → última estrategia calculada para ese activo
+
+#### D4 — Frontend: Strategy Display
+- **Archivo:** `frontend/src/components/dashboard/strategy-card.tsx`
+- Muestra entrada, SL, TP1/TP2/TP3, N acciones, RR ratio
+- Badge "RECOMENDADA" (verde) / "NO RECOMENDADA" (rojo) según RR
+- Conectar desde RightSidebar tab "HeavenBuilder"
+
+---
+
+### FASE E — M6 AI Orchestrator 🔲 PENDIENTE
+
+> **Objetivo:** Asistente que JAMÁS improvisa. Lee KPIs de Redis, construye prompt determinista, el LLM solo narra.  
+> **Regla fundamental:** El system prompt incluye: *"NO tienes acceso a internet. Responde SOLO usando los datos del JSON proporcionado. Si un dato no está en el JSON, di 'no tengo esa información'."*
+
+#### E1 — OpenAI/Ollama Client
+- **Archivo:** `backend/app/services/ai/llm_client.py`
+- Abstracción `LLMClient` con implementaciones `OpenAIClient` y `OllamaClient`
+- Selección por `settings.LLM_PROVIDER` (env var): `openai` o `ollama`
+- Dev default: Ollama + Llama 3 (costo $0). Prod: OpenAI GPT-4o.
+
+#### E2 — Prompt Builder
+- **Archivo:** `backend/app/services/ai/prompt_builder.py`
+- `build_system_prompt(kpi_snapshot: dict, user_capital: float, risk_pct: float) -> str`
+- Inyecta TODO el KPI snapshot como JSON estructurado en el system prompt
+- Incluye instrucciones estrictas anti-improvisación + reglas de negocio
+- `build_user_message(raw_question: str) -> str` — sanitización de input
+
+#### E3 — Response Validator
+- **Archivo:** `backend/app/services/ai/response_validator.py`
+- Extrae números del texto de respuesta del LLM
+- Cruza cada número con los KPIs en Redis: si difiere >1% → flag como posible alucinación
+- Si hay alucinación detectada → regena o responde con disclaimer
+
+#### E4 — Assistant Endpoint
+- **Archivo:** `backend/app/api/v1/assistant.py`
+- `POST /api/v1/assistant/query` → body: `{ticker, message, capital?, risk_pct?}`
+- Flujo: Redis KPIs → PromptBuilder → LLM → ResponseValidator → Response
+- Streaming con SSE (`StreamingResponse`) para respuesta progresiva
+- Tests: 5 tests (mock LLM) verificando que context injection funciona y anti-improvisación activa
+
+#### E5 — Frontend: Chat Funcional
+- **Archivo:** `frontend/src/components/dashboard/right-sidebar.tsx`
+- Input real → `POST /api/v1/assistant/query`
+- Historial de mensajes en Zustand store (`chatMessages: Message[]`)
+- Streaming display (SSE o polling cada 500ms)
+- Contador de mensajes restantes (hardcodeado 400 → M9 lo conecta)
+- Disable input mientras `activeTicker === null`
+
+---
+
+### FASE F — M8 Strategy Builder + Checklist 🔲 PENDIENTE
+
+> **Objetivo:** El tab "HeavenBuilder" es funcional: genera estrategia completa + ejecuta checklist 6 puntos automáticamente.
+
+#### F1 — Checklist Logic (Backend)
+- **Archivo:** `backend/app/services/checklist.py`
+- `run_checklist(kpi_snapshot, oscillators, strategy_result) -> ChecklistResult`
+- 6 puntos (todos automáticos, ninguno manual):
+  1. NetBrute e Intenciones misma dirección → ✅/⚠️
+  2. Proyección macro 90d alineada con dirección → ✅/⚠️
+  3. Volatilidad evaluada y stops ajustados → ✅ siempre (stops son ATR-based)
+  4. Confianza de ambos osciladores > 60% → ✅/⚠️
+  5. Position sizing calculado (N_shares > 0) → ✅/❌
+  6. RR ratio ≥ 1:2 → ✅/❌ (❌ = bloqueo, no solo advertencia)
+- `POST /api/v1/strategies/checklist`
+
+#### F2 — HeavenBuilder Tab UI
+- **Archivo:** `frontend/src/components/dashboard/heaven-builder.tsx`
+- Formulario: capital ($), risk_pct (slider 0.5%-3%), dirección (LONG/SHORT)
+- Botón "Generar Estrategia" → `POST /api/v1/strategies/calculate`
+- Muestra: StrategyCard + ChecklistCard lado a lado
+- ChecklistCard: 6 filas con ✅/⚠️/❌ y texto explicativo por punto
+- Si algún ❌ → botón "Operar" deshabilitado con tooltip explicando por qué
+
+---
+
+### FASE G — M9 User Management 🔲 PENDIENTE
+
+> Depende de: Auth (ya scaffold en Phase 2) + todos los módulos anteriores.
+
+- Perfil de riesgo del usuario (capital, risk_pct, tolerancia)
+- Historial de análisis (qué activos analizó, qué estrategias generó)
+- Watchlist (activos favoritos)
+- Contador real de llamadas al asistente (por tier de suscripción)
+- `GET /api/v1/users/me/profile` | `PUT /api/v1/users/me/risk-profile`
+
+---
+
+### FASE H — M10 Suscripciones + Pagos 🔲 PENDIENTE
+
+> Depende de: M9 (usuarios con perfiles). MVP de monetización.
+
+- Stripe Checkout + webhooks
+- Tiers: Free (80 análisis/mes, 400 mensajes asistente) | Pro ($X/mes, ilimitado) | Enterprise
+- Feature flags por tier: algunos KPIs solo en Pro
+- `POST /api/v1/subscriptions/create-checkout-session`
+
+---
+
+### FASE I — Deploy Staging 🔲 PENDIENTE
+
+> Gate de calidad: E2E-1 pasando (buscar activo → ver dashboard con datos reales).
+
+- `docker-compose.prod.yml` con todos los servicios
+- Variables de entorno en `.env.production`
+- Deploy en Hetzner VPS (recomendado para MVP: €20/mes)
+- SSL via Traefik + Let's Encrypt
+- GitHub Actions: deploy automático a staging en merge a `main`
+
+---
+
+### Decisiones de Algoritmos (No cambiar sin documentar motivo)
+
+| Algoritmo | Decisión | Justificación |
+|-----------|----------|---------------|
+| **NetBrute** | Chaikin Money Flow (14p) × 100 | Mide flujo real de dinero desde OHLCV+Volume. Open source, probado, calculable desde datos que ya tenemos. Produce -100/+100 igual que el original |
+| **Intenciones** | RSI(14) + signo Momentum(14) | RSI mide presión compradora/vendedora (psicología). Momentum confirma dirección. Combinados dan BUY/SELL/HOLD con nivel de confianza |
+| **ATR** | Wilder 14 períodos | Estándar de la industria, ya implementado en M2 |
+| **SL dinámico** | 2.5 × ATR | Del video de Fernando. Default configurable, nunca porcentaje fijo |
+| **TPs** | 33%/33%/34% en 1.5x/2.5x ATR + trailing | Del video, confirmado en todas las IAs. RN-4 |
+| **LLM calc** | **Python calcula, LLM narra** | Insight crítico: el LLM nunca hace matemáticas. Solo explica resultados calculados por Python |
+
+---
+
+### Invariantes Técnicas (NUNCA violar)
+
+```
+1. Frontend sin QueryClientProvider → crashea. Siempre envolver en layout.tsx.
+2. El KPI snapshot en Redis tiene TTL=60s. Nunca leer DB directamente en GET /kpis.
+3. risk_pct > 0.03 → ValidationError en backend. No negociable (RN-1).
+4. LLM no recibe preguntas sin snapshot de Redis inyectado en system prompt.
+5. Timestamps siempre UTC en BD. Conversión a local solo en frontend.
+6. Un activo a la vez. Si cambia ticker → invalidar todo el store Zustand.
+7. Decimal(12,4) para acciones, Decimal(18,8) para crypto. No usar float.
+```
 
 ---
 
@@ -255,16 +771,16 @@ git push origin main                                  # Push a remote
 
 | Orden | Módulo | Depende de | Sprint |
 |-------|--------|-----------|--------|
-| M1 | **Data Ingestion** (Polygon.io, Binance, FRED) | Infraestructura (Redis, TimescaleDB) | Sprint 1-2 |
-| M2 | **Quant Engine** (ATR, volatilidad, tendencias, momentum) | M1 (datos normalizados) | Sprint 2-3 |
-| M3 | **Oscillator Engine** (NetBrute + Intenciones) | M2 (KPIs base calculados) | Sprint 3-4 |
-| M4 | **Dashboard Frontend** (KPI cards, gráficos, búsqueda activos) | M2, M3 (KPIs en Redis) | Sprint 3-5 |
-| M5 | **Risk Manager** (Position Sizing, stops, take-profits) | M2 (ATR disponible) | Sprint 4-5 |
-| M6 | **AI Orchestrator** (prompt builder, LLM call, post-validación) | M2, M3, M5 (todo el context) | Sprint 5-6 |
-| M7 | **Assistant Chat UI** | M6 (API del asistente) | Sprint 6-7 |
-| M8 | **Strategy Builder + Checklist** | M5, M6 (riesgo + IA) | Sprint 7-8 |
-| M9 | **User Management** (perfil riesgo, watchlist, histórico) | Auth (Fase 2) | Sprint 8-9 |
-| M10 | **Suscripciones + Pagos** (Stripe) | M9 (usuarios) | Sprint 9-10 |
+| M1 | ✅ **Data Ingestion** (Polygon.io, Binance, FRED) | Infraestructura (Redis, TimescaleDB) | Sprint 1-2 |
+| M2 | ✅ **Quant Engine** (ATR, volatilidad, tendencias, momentum) | M1 (datos normalizados) | Sprint 2-3 |
+| M3 | 🔲 **Oscillator Engine** (NetBrute + Intenciones) | M2 (KPIs base calculados) | Sprint 3-4 |
+| M4 | ✅ **Dashboard Frontend** (KPI cards, gráficos, búsqueda activos) | M2, M3 (KPIs en Redis) | Sprint 3-5 |
+| M5 | 🔲 **Risk Manager** (Position Sizing, stops, take-profits) | M2 (ATR disponible) | Sprint 4-5 |
+| M6 | 🔲 **AI Orchestrator** (prompt builder, LLM call, post-validación) | M2, M3, M5 (todo el context) | Sprint 5-6 |
+| M7 | 🔲 **Assistant Chat UI** | M6 (API del asistente) | Sprint 6-7 |
+| M8 | 🔲 **Strategy Builder + Checklist** | M5, M6 (riesgo + IA) | Sprint 7-8 |
+| M9 | 🔲 **User Management** (perfil riesgo, watchlist, histórico) | Auth (Fase 2) | Sprint 8-9 |
+| M10 | 🔲 **Suscripciones + Pagos** (Stripe) | M9 (usuarios) | Sprint 9-10 |
 
 **MVP 1 = M1 a M8** (plataforma funcional completa sin pagos)  
 **MVP 2 = M9 + M10** (monetización)
