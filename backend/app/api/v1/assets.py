@@ -94,23 +94,46 @@ async def search_assets(
     return {"results": results[:10], "count": len(results[:10])}
 
 
+def _detect_asset_type(ticker: str) -> str:
+    """Infer asset type from ticker format.
+
+    BTC-USD, ETH-USD  → crypto  (ends with -USD and known crypto pattern)
+    EURUSD, GBPJPY    → forex   (exactly 6 uppercase alpha chars)
+    everything else   → stock
+    """
+    t = ticker.upper()
+    if t.endswith("-USD") or t.endswith("-USDT"):
+        return "crypto"
+    if len(t) == 6 and t.isalpha():
+        return "forex"
+    return "stock"
+
+
 @router.post("/{ticker}/load", response_model=AssetLoadResponse)
 async def load_asset(
     ticker: str,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    """Load an asset into the dashboard — triggers price data ingestion."""
+    """Load an asset into the dashboard — triggers price data ingestion.
+
+    If the asset is not yet in the DB (e.g. user typed a ticker directly
+    without using the search box), it is created automatically.
+    """
     ticker = ticker.upper()
 
-    # Find the asset in DB
+    # Find or auto-create the asset in DB
     result = await db.execute(select(Asset).where(Asset.ticker == ticker))
     asset = result.scalar_one_or_none()
 
     if asset is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Asset not found. Search first with GET /assets/search",
+        asset_type = _detect_asset_type(ticker)
+        asset = await ensure_asset_exists(
+            ticker=ticker,
+            name=ticker,  # placeholder name; updated after successful data fetch
+            asset_type=asset_type,
+            exchange=None,
+            db=db,
         )
 
     # Ingest price data

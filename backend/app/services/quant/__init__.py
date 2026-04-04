@@ -93,13 +93,13 @@ async def calculate_kpis(ticker: str, asset_id: str, db: AsyncSession) -> dict:
 
     # --- Momentum (12-period rate of change) ---
     momentum_value = None
-    momentum_class = "neutral"
+    momentum_class = "NEUTRAL"
     if len(closes) >= 13:
         momentum_value = closes[-1] - closes[-13]
         if momentum_value > 0:
-            momentum_class = "positive"
+            momentum_class = "POSITIVE"
         elif momentum_value < 0:
-            momentum_class = "negative"
+            momentum_class = "NEGATIVE"
 
     # --- Oscillators (M3) ---
     netbrute: OscillatorResult = calculate_netbrute(highs, lows, closes, volumes)
@@ -304,12 +304,15 @@ def _daily_std(closes: list[float], window: int = 21) -> float | None:
 
 
 def _trend_from_sma(price: float, sma: float | None) -> str | None:
-    """Determine trend direction from price vs SMA."""
+    """Determine trend direction from price vs SMA.
+
+    Returns "UP", "DOWN", or "SIDEWAYS" to match frontend TrendDirection enum.
+    """
     if sma is None:
         return None
     ratio = price / sma
     if ratio > 1.01:
-        return "bullish"
+        return "UP"
     elif ratio < 0.99:
-        return "bearish"
-    return "neutral"
+        return "DOWN"
+    return "SIDEWAYS"

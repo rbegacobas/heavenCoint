@@ -23,9 +23,9 @@ async def get_kpis(
     """Get current KPIs for a ticker. Reads from Redis, recalculates if stale."""
     ticker = ticker.upper()
 
-    # Try Redis cache first
+    # Try Redis cache first (must have full KPI data, not just ingestion partial cache)
     cached = await redis_client.hgetall(f"kpi:{ticker}")
-    if cached and "current_price" in cached:
+    if cached and "atr_value" in cached:
         return {
             "ticker": ticker,
             "source": "cache",
