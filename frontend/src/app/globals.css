@@ -76,6 +76,30 @@
 }
 
 :root {
+  /* HeavenCoint design tokens as real CSS custom properties
+     (@theme inline does not emit :root vars, so we declare them here too) */
+  --color-hc-bg-dark: #1B1F3B;
+  --color-hc-bg-ticker: #14172E;
+  --color-hc-bg-sidebar: #1E2148;
+  --color-hc-bg-input: #2A2D52;
+  --color-hc-bg-card: #FFFFFF;
+  --color-hc-bg-card-light: #F8F9FC;
+  --color-hc-border-dark: #2A2D52;
+  --color-hc-border-light: #E5E7EB;
+  --color-hc-text-white: #FFFFFF;
+  --color-hc-text-dark: #1A1D3A;
+  --color-hc-text-muted: #A0A4B8;
+  --color-hc-text-secondary: #8B8FA3;
+  --color-hc-accent-green: #22C55E;
+  --color-hc-accent-red: #EF4444;
+  --color-hc-accent-blue: #3B82F6;
+  --color-hc-accent-yellow: #F59E0B;
+  --color-hc-accent-purple: #8B5CF6;
+  --color-hc-accent-cyan: #06B6D4;
+  --color-hc-btn-primary: #6366F1;
+  --color-hc-btn-green: #22C55E;
+  --color-hc-sidebar-accent: #6366F1;
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
