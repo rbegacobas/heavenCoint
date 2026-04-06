@@ -120,9 +120,9 @@ def test_volatility_insufficient_data():
 
 
 def test_trend_from_sma():
-    assert _trend_from_sma(110.0, 100.0) == "bullish"
-    assert _trend_from_sma(90.0, 100.0) == "bearish"
-    assert _trend_from_sma(100.5, 100.0) == "neutral"
+    assert _trend_from_sma(110.0, 100.0) == "UP"
+    assert _trend_from_sma(90.0, 100.0) == "DOWN"
+    assert _trend_from_sma(100.5, 100.0) == "SIDEWAYS"
     assert _trend_from_sma(100.0, None) is None
 
 
@@ -164,7 +164,7 @@ async def test_kpi_calculation(client: AsyncClient, db_session: AsyncSession) ->
     assert "volatility" in data
     assert data["volatility"]["state"] in ("expansion", "contraction", "stable")
     assert "momentum" in data
-    assert data["momentum"]["class"] in ("positive", "negative", "neutral")
+    assert data["momentum"]["class"] in ("POSITIVE", "NEGATIVE", "NEUTRAL")
     assert "trends" in data
 
     # Verify Redis was called to cache the KPI

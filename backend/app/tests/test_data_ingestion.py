@@ -57,24 +57,12 @@ async def test_search_assets_requires_auth(client: AsyncClient) -> None:
 async def test_search_assets_external(client: AsyncClient) -> None:
     headers = await _get_auth_headers(client, "search@test.com")
 
+    # Mock both Polygon and yfinance search so test is independent of API keys
+    mock_results = [{"ticker": "AAPL", "name": "Apple Inc.", "exchange": "XNAS", "type": "stock"}]
     with (
-        patch(
-            "app.api.v1.assets.search_stock_tickers",
-            new_callable=AsyncMock,
-            return_value=[
-                {
-                    "ticker": "AAPL",
-                    "name": "Apple Inc.",
-                    "exchange": "XNAS",
-                    "type": "stock",
-                }
-            ],
-        ),
-        patch(
-            "app.api.v1.assets.search_crypto_tickers",
-            new_callable=AsyncMock,
-            return_value=[],
-        ),
+        patch("app.api.v1.assets.search_stock_tickers", new_callable=AsyncMock, return_value=mock_results),
+        patch("app.api.v1.assets.search_stock_tickers_yf", new_callable=AsyncMock, return_value=mock_results),
+        patch("app.api.v1.assets.search_crypto_tickers", new_callable=AsyncMock, return_value=[]),
     ):
         resp = await client.get("/api/v1/assets/search?q=AAPL", headers=headers)
         assert resp.status_code == 200
@@ -84,10 +72,19 @@ async def test_search_assets_external(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_load_asset_not_found(client: AsyncClient) -> None:
+async def test_load_asset_auto_creates(client: AsyncClient) -> None:
+    """POST /assets/{ticker}/load now auto-creates unknown assets instead of 404."""
     headers = await _get_auth_headers(client, "loader@test.com")
-    resp = await client.post("/api/v1/assets/FAKE999/load", headers=headers)
-    assert resp.status_code == 404
+    # Mock yfinance so no real network call happens (returns 0 bars for unknown ticker)
+    with patch(
+        "app.services.market_data.ingestion.fetch_stock_bars_yf",
+        new_callable=AsyncMock,
+        return_value=[],
+    ):
+        resp = await client.post("/api/v1/assets/FAKE999/load", headers=headers)
+    # Should succeed (200) even if no bars ingested — asset is auto-created
+    assert resp.status_code == 200
+    assert resp.json()["ticker"] == "FAKE999"
 
 
 @pytest.mark.asyncio
@@ -123,7 +120,7 @@ async def test_load_asset_and_get_prices(client: AsyncClient) -> None:
         {"t": 1712016000000, "o": 423.2, "h": 428.0, "l": 422.0, "c": 427.1, "v": 1100000},
     ]
     with patch(
-        "app.services.market_data.ingestion.fetch_stock_bars",
+        "app.services.market_data.ingestion.fetch_stock_bars_yf",
         new_callable=AsyncMock,
         return_value=mock_bars,
     ):

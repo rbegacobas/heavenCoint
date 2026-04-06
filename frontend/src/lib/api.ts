@@ -116,6 +116,21 @@ export const kpisApi = {
   },
 };
 
+// ── Strategies ───────────────────────────────────────────────────────────────
+
+export const strategiesApi = {
+  calculate(body: import("@/types/api").StrategyRequest): Promise<import("@/types/api").StrategyResult> {
+    return request("/strategies/calculate", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+
+  getLast(ticker: string): Promise<import("@/types/api").StrategyResult> {
+    return request(`/strategies/${ticker.toUpperCase()}/last`);
+  },
+};
+
 // ── Macro ─────────────────────────────────────────────────────────────────────
 
 export const macroApi = {

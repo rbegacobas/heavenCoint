@@ -88,6 +88,36 @@ export interface MacroIndicatorsResponse {
   economic_cycle_phase: string | null;
 }
 
+// ── Strategy ─────────────────────────────────────────────────────────────────
+
+export interface StrategyRequest {
+  ticker: string;
+  direction: "LONG" | "SHORT";
+  capital: number;
+  risk_pct: number;
+}
+
+export interface StrategyResult {
+  ticker: string;
+  direction: "LONG" | "SHORT";
+  entry_price: number;
+  stop_loss: number;
+  tp1: number;
+  tp2: number;
+  tp3_trailing_atr_mult: number;
+  n_shares: number;
+  risk_amount: number;
+  rr_ratio: number;
+  is_recommended: boolean;
+  atr_used: number;
+  sl_atr_mult: number;
+  tp1_pct: number;
+  tp2_pct: number;
+  tp3_pct: number;
+  warning: string | null;
+  calculated_at: string;
+}
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface LoginRequest {
