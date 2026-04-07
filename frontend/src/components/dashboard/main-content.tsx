@@ -15,13 +15,14 @@ import {
   TrendingUp,
   TrendingDown,
   ArrowDown,
-  CircleAlert,
   Search,
 } from "lucide-react";
 import { useAssetStore } from "@/stores/asset-store";
 import { useKpiSnapshot } from "@/hooks/use-kpi-snapshot";
+import { useOscillators } from "@/hooks/use-oscillators";
 import {
   KpiSnapshot,
+  OscillatorsResponse,
   TrendDirection,
   VolatilityState,
   MomentumClass,
@@ -243,11 +244,35 @@ function PriceLevels({ snapshot }: { snapshot: KpiSnapshot }) {
 }
 
 // ── Market Status Card ────────────────────────────────────────────────────────
-// TODO: M3 — replace mock state with real oscillator data
 
-function MarketStatus({ snapshot }: { snapshot: KpiSnapshot }) {
+function MarketStatus({
+  snapshot,
+  oscillators,
+}: {
+  snapshot: KpiSnapshot;
+  oscillators: OscillatorsResponse | null;
+}) {
   const trend = snapshot.trends.d50 ?? "SIDEWAYS";
   const isUp = trend === "UP";
+
+  const intentions = oscillators?.intentions ?? null;
+  const divergence = oscillators?.divergence ?? false;
+
+  const intentionsLabel =
+    intentions === null
+      ? null
+      : intentions.zone === "OVERSOLD"
+        ? "COMPRA EXTREMA"
+        : intentions.zone === "OVERBOUGHT"
+          ? "VENTA EXTREMA"
+          : intentions.zone === "BULLISH"
+            ? "ALCISTA"
+            : "BAJISTA";
+
+  const intentionsColor =
+    intentions?.zone === "OVERSOLD" || intentions?.zone === "BULLISH"
+      ? "text-hc-accent-green"
+      : "text-hc-accent-red";
 
   return (
     <div className="flex flex-1 flex-col gap-2.5 rounded-[10px] bg-hc-bg-card p-4">
@@ -271,16 +296,35 @@ function MarketStatus({ snapshot }: { snapshot: KpiSnapshot }) {
           </span>
         </span>
       </div>
-      {snapshot.trends.divergence && (
+
+      {intentions !== null && (
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-hc-text-muted">Intenciones</span>
+          <span className={`text-[11px] font-bold ${intentionsColor}`}>
+            {intentionsLabel}
+          </span>
+          <span className="text-[10px] text-hc-text-muted">
+            {intentions.confidence_level.toFixed(0)}% conf.
+          </span>
+        </div>
+      )}
+
+      {divergence && (
         <span className="text-[13px] font-bold text-hc-accent-yellow">
-          DIVERGENCIA →
+          ⚠ DIVERGENCIA OSCILADORES
         </span>
       )}
+
       <p className="text-[11px] leading-5 text-hc-text-secondary">
-        {snapshot.trends.divergence
-          ? "Divergencia detectada entre tendencias. Opera con precaución."
-          : `Tendencias 50d/134d/200d ${isUp ? "alineadas al alza" : "alineadas a la baja o mixtas"}.`}
+        {divergence
+          ? "NetBrute e Intenciones divergen. Opera con precaución."
+          : intentions !== null
+            ? intentions.observation
+            : snapshot.trends.divergence
+              ? "Divergencia detectada entre tendencias. Opera con precaución."
+              : `Tendencias 50d/134d/200d ${isUp ? "alineadas al alza" : "alineadas a la baja o mixtas"}.`}
       </p>
+
       <div className="flex justify-between">
         <span className="text-[9px] text-hc-text-muted">Extremo Bajista</span>
         <span className="text-[9px] text-hc-text-muted">Neutral</span>
@@ -291,14 +335,14 @@ function MarketStatus({ snapshot }: { snapshot: KpiSnapshot }) {
         <div className="flex-1 bg-hc-accent-yellow" />
         <div className="flex-1 bg-hc-accent-green" />
       </div>
-      <div className="flex items-center gap-1.5">
-        <TriangleAlert className="h-3 w-3 text-hc-accent-yellow" />
-        <span className="text-[10px] font-semibold text-hc-accent-yellow">Nota:</span>
-      </div>
-      <p className="text-[10px] leading-4 text-hc-accent-cyan">
-        Osciladores NetBrute e Intenciones disponibles en M3.
-        {/* TODO: M3 — replace with real oscillator state */}
-      </p>
+      {intentions !== null && (
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-hc-text-muted">RSI-14:</span>
+          <span className={`text-[10px] font-semibold ${intentionsColor}`}>
+            {intentions.value.toFixed(1)}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -568,54 +612,92 @@ function DirectionalCard({ snapshot }: { snapshot: KpiSnapshot }) {
 }
 
 // ── NetBrut Card ──────────────────────────────────────────────────────────────
-// TODO: M3 — replace static zones with real CMF (NetBrute) oscillator data
 
-function NetBrutCard() {
-  const zones = [
-    { label: "Sobreventa", active: true },
-    { label: "Bajista", active: false },
-    { label: "Neutral", active: false },
-    { label: "Alcista", active: false },
-    { label: "Sobrecompra", active: false },
-  ];
+function NetBrutCard({ oscillators }: { oscillators: OscillatorsResponse | null }) {
+  const nb = oscillators?.netbrute ?? null;
+
+  const zoneOrder = ["OVERSOLD", "BEARISH", "NEUTRAL", "BULLISH", "OVERBOUGHT"] as const;
+  const zoneLabels: Record<string, string> = {
+    OVERSOLD: "Sobreventa",
+    BEARISH: "Bajista",
+    NEUTRAL: "Neutral",
+    BULLISH: "Alcista",
+    OVERBOUGHT: "Sobrecompra",
+  };
+  const zoneColors: Record<string, string> = {
+    OVERSOLD: "bg-hc-accent-red",
+    BEARISH: "bg-hc-accent-yellow",
+    NEUTRAL: "bg-hc-text-muted",
+    BULLISH: "bg-hc-accent-cyan",
+    OVERBOUGHT: "bg-hc-accent-green",
+  };
+  const activeZone = nb?.zone ?? null;
+
+  const crossColor =
+    nb?.cross_type === "BULLISH"
+      ? "text-hc-accent-green"
+      : nb?.cross_type === "BEARISH"
+        ? "text-hc-accent-red"
+        : "text-hc-text-muted";
+
+  const valueColor =
+    nb === null
+      ? "text-hc-text-muted"
+      : nb.value > 25
+        ? "text-hc-accent-green"
+        : nb.value < -25
+          ? "text-hc-accent-red"
+          : nb.value > 0
+            ? "text-hc-accent-cyan"
+            : "text-hc-accent-yellow";
 
   return (
     <div className="flex flex-1 flex-col gap-1.5 rounded-[10px] bg-hc-bg-card p-4">
       <h3 className="text-sm font-bold text-hc-text-dark">Estado NetBrut</h3>
-      <span className="text-[10px] text-hc-text-muted">Estado actual</span>
-      <p className="text-[13px] font-bold leading-[1.3] text-hc-accent-yellow">
-        PENDIENTE
-        <br />
-        MÓDULO M3
-      </p>
-      <div className="flex items-center gap-1.5">
-        <CircleAlert className="h-3 w-3 text-hc-accent-yellow" />
-        <span className="text-[9px] font-semibold text-hc-accent-yellow">
-          DISPONIBLE EN M3
-        </span>
-      </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-[10px] text-hc-text-muted">Oscillator Engine</span>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-hc-accent-yellow">
-            CMF-14 próximamente
-          </span>
-        </div>
-      </div>
+      <span className="text-[10px] text-hc-text-muted">CMF-14 (flujo institucional)</span>
+
+      {nb === null ? (
+        <p className="text-[13px] font-bold leading-[1.3] text-hc-text-muted">—</p>
+      ) : (
+        <>
+          <div className="flex items-baseline gap-2">
+            <span className={`text-[22px] font-bold leading-none ${valueColor}`}>
+              {nb.value.toFixed(2)}
+            </span>
+            <span className={`text-[10px] font-semibold ${crossColor}`}>
+              {nb.cross_type === "BULLISH"
+                ? "↑ CRUCE ALCISTA"
+                : nb.cross_type === "BEARISH"
+                  ? "↓ CRUCE BAJISTA"
+                  : "SIN CRUCE"}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <CircleCheck className="h-3 w-3 text-hc-text-muted" />
+            <span className="text-[10px] text-hc-text-muted">
+              Confianza: <span className={`font-semibold ${valueColor}`}>{nb.confidence_level.toFixed(0)}%</span>
+            </span>
+          </div>
+        </>
+      )}
+
       <div className="flex gap-0.5">
-        {zones.map((z) => (
-          <div key={z.label} className="flex flex-1 flex-col items-center gap-0.5">
-            <span className="text-[7px] text-hc-text-muted">{z.label}</span>
-            <div className={`h-4 w-full rounded-sm bg-hc-bg-card-light`} />
+        {zoneOrder.map((z) => (
+          <div key={z} className="flex flex-1 flex-col items-center gap-0.5">
+            <span className="text-[7px] text-hc-text-muted">{zoneLabels[z]}</span>
+            <div
+              className={`h-4 w-full rounded-sm ${
+                activeZone === z ? zoneColors[z] : "bg-hc-bg-card-light"
+              }`}
+            />
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-1.5">
-        <TriangleAlert className="h-3 w-3 text-hc-accent-yellow" />
-        <span className="text-[10px] font-semibold text-hc-accent-yellow">
-          Oscilador NetBrute — M3
-        </span>
-      </div>
+
+      {nb !== null && (
+        <p className="text-[10px] leading-4 text-hc-text-secondary">{nb.observation}</p>
+      )}
     </div>
   );
 }
@@ -638,6 +720,7 @@ export default function MainContent() {
 
   // Wire up polling once we have an active ticker
   useKpiSnapshot(activeTicker);
+  const { data: oscillators = null } = useOscillators(activeTicker);
 
   // ── Empty state ───────────────────────────────────────────────────────────
   if (!activeTicker && !isLoading) {
@@ -692,7 +775,7 @@ export default function MainContent() {
 
         {/* Middle Row: Market Status + Seasonality + ATR/Momentum */}
         <div className="flex shrink-0 gap-4">
-          <MarketStatus snapshot={s} />
+          <MarketStatus snapshot={s} oscillators={oscillators} />
           <Seasonality />
           <div className="flex w-[200px] shrink-0 flex-col gap-4">
             <AtrCard snapshot={s} />
@@ -705,7 +788,7 @@ export default function MainContent() {
           <ProjectionCard snapshot={s} />
           <VolatilityCard snapshot={s} />
           <DirectionalCard snapshot={s} />
-          <NetBrutCard />
+          <NetBrutCard oscillators={oscillators} />
         </div>
       </div>
     </div>

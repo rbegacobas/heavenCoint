@@ -88,6 +88,25 @@ export interface MacroIndicatorsResponse {
   economic_cycle_phase: string | null;
 }
 
+// ── Oscillators ──────────────────────────────────────────────────────────────
+
+export interface OscillatorData {
+  value: number;
+  cross_type: "BULLISH" | "BEARISH" | "NONE";
+  zone: "OVERBOUGHT" | "BULLISH" | "BEARISH" | "OVERSOLD";
+  observation: string;
+  confidence_level: number;
+}
+
+export interface OscillatorsResponse {
+  ticker: string;
+  source: string;
+  netbrute: OscillatorData;
+  intentions: OscillatorData;
+  divergence: boolean;
+  last_updated: string | null;
+}
+
 // ── Strategy ─────────────────────────────────────────────────────────────────
 
 export interface StrategyRequest {

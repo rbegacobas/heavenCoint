@@ -116,6 +116,14 @@ export const kpisApi = {
   },
 };
 
+// ── Oscillators ──────────────────────────────────────────────────────────────
+
+export const oscillatorsApi = {
+  get(ticker: string): Promise<import("@/types/api").OscillatorsResponse> {
+    return request(`/oscillators/${ticker.toUpperCase()}`);
+  },
+};
+
 // ── Strategies ───────────────────────────────────────────────────────────────
 
 export const strategiesApi = {
