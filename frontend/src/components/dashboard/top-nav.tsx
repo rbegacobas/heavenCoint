@@ -229,27 +229,31 @@ export default function TopNav() {
         <div className="flex items-center gap-4">
 
           {/* Schwab connection indicator — click to open modal */}
-          <button
-            onClick={() => setShowSchwabModal(true)}
-            className="flex items-center gap-1.5 rounded-md px-2 py-1 transition hover:bg-hc-bg-input"
-            title={schwab?.message ?? "Gestionar conexión Schwab"}
-          >
-            {schwabConnected ? (
-              <>
-                <Wifi className={`h-4 w-4 ${schwabWarning ? "text-hc-accent-yellow" : "text-hc-accent-green"}`} />
-                <span className={`text-[10px] font-semibold ${schwabWarning ? "text-hc-accent-yellow" : "text-hc-accent-green"}`}>
-                  {schwabWarning
-                    ? `Schwab ⚠ ${schwab?.refresh_expires_in_days?.toFixed(0)}d`
-                    : `Schwab ✓ ${schwab?.refresh_expires_in_days?.toFixed(1)}d`}
-                </span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="h-4 w-4 text-hc-text-muted" />
-                <span className="text-[10px] text-hc-text-muted">Conectar Schwab</span>
-              </>
-            )}
-          </button>
+          {schwabConnected ? (
+            <button
+              onClick={() => setShowSchwabModal(true)}
+              className="flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 transition hover:bg-hc-bg-input"
+              title={schwab?.message ?? "Gestionar conexión Schwab"}
+            >
+              <Wifi className={`h-4 w-4 ${schwabWarning ? "text-hc-accent-yellow" : "text-hc-accent-green"}`} />
+              <span className={`text-[10px] font-semibold ${schwabWarning ? "text-hc-accent-yellow" : "text-hc-accent-green"}`}>
+                {schwabWarning
+                  ? `Schwab ⚠ ${schwab?.refresh_expires_in_days?.toFixed(0)}d`
+                  : `Schwab ✓ ${schwab?.refresh_expires_in_days?.toFixed(1)}d`}
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowSchwabModal(true)}
+              className="group flex cursor-pointer items-center gap-1.5 rounded-md border border-red-400/40 bg-red-500/10 px-2.5 py-1 transition hover:bg-red-500/20 animate-pulse hover:animate-none"
+              title="Schwab desconectado — click para conectar"
+            >
+              <WifiOff className="h-4 w-4 text-red-400 group-hover:text-red-300" />
+              <span className="text-[10px] font-semibold text-red-400 group-hover:text-red-300">
+                Conectar Schwab
+              </span>
+            </button>
+          )}
 
           <Bell className="h-4 w-4 text-hc-text-muted" />
           <Moon className="h-4 w-4 text-hc-text-muted" />
