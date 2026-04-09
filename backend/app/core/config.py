@@ -64,6 +64,11 @@ class Settings(BaseSettings):
     # FRED
     fred_api_key: str = ""
 
+    # Schwab / Thinkorswim
+    schwab_app_key: str = ""
+    schwab_secret: str = ""
+    schwab_callback_url: str = "https://127.0.0.1"
+
     # LLM
     openai_api_key: str = ""
     llm_model: str = "gpt-4o"

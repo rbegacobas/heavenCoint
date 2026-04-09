@@ -8,6 +8,7 @@ from app.api.v1.health import router as health_router
 from app.api.v1.kpis import router as kpis_router
 from app.api.v1.macro import router as macro_router
 from app.api.v1.oscillators import router as oscillators_router
+from app.api.v1.schwab import router as schwab_router
 from app.api.v1.strategies import router as strategies_router
 
 api_router = APIRouter(prefix="/api/v1")
@@ -18,3 +19,4 @@ api_router.include_router(macro_router)
 api_router.include_router(kpis_router)
 api_router.include_router(oscillators_router)
 api_router.include_router(strategies_router)
+api_router.include_router(schwab_router)

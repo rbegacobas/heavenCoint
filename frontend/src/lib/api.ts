@@ -37,7 +37,7 @@ export function clearToken(): void {
 
 // ── Core fetch ────────────────────────────────────────────────────────────────
 
-async function request<T>(
+export async function request<T>(
   path: string,
   opts: RequestInit & { auth?: boolean } = {},
 ): Promise<T> {
@@ -144,5 +144,27 @@ export const strategiesApi = {
 export const macroApi = {
   get(): Promise<MacroIndicatorsResponse> {
     return request<MacroIndicatorsResponse>("/macro/indicators");
+  },
+};
+
+// ── Schwab ────────────────────────────────────────────────────────────────────
+
+export const schwabApi = {
+  status() {
+    return request<{ connected: boolean; refresh_expires_in_days: number | null; needs_relogin: boolean; message: string }>("/schwab/status");
+  },
+  getAuthUrl() {
+    return request<{ auth_url: string; instructions: string }>("/schwab/auth-url");
+  },
+  callback(redirected_url: string) {
+    return request<{ success: boolean; message: string }>("/schwab/callback", {
+      method: "POST",
+      body: JSON.stringify({ redirected_url }),
+    });
+  },
+  disconnect() {
+    return request<{ success: boolean; message: string }>("/schwab/disconnect", {
+      method: "POST",
+    });
   },
 };

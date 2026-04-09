@@ -30,3 +30,6 @@ httpx==0.28.1
 
 # Free market data fallback (used when Polygon key is not configured)
 yfinance==0.2.54
+
+# Schwab / Thinkorswim broker integration
+schwab-py==1.5.1
