@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.api.v1.auth import get_current_user
+from app.core.redis import redis_client
 from app.models.user import User
 from app.services import schwab_client
 
@@ -94,9 +95,16 @@ async def handle_callback(
     """
     try:
         await schwab_client.exchange_code_for_token(body.redirected_url)
+
+        # Invalidate all cached KPI data so next analysis uses Schwab real-time data.
+        # Pattern: kpi:* keys — delete them so ingestion re-runs with Schwab as source.
+        keys = await redis_client.keys("kpi:*")
+        if keys:
+            await redis_client.delete(*keys)
+
         return SchwabCallbackResponse(
             success=True,
-            message="¡Cuenta Schwab conectada exitosamente! Token guardado.",
+            message="¡Cuenta Schwab conectada exitosamente! Cache invalidado — próximo análisis usará datos en tiempo real.",
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

@@ -1,7 +1,10 @@
 """Data ingestion orchestrator — fetches market data and persists to DB + Redis."""
 
+import logging
 from datetime import UTC, datetime
 from decimal import Decimal
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,32 +18,51 @@ from app.services.market_data.binance_client import fetch_crypto_bars
 from app.services.market_data.fred_client import fetch_all_indicators
 from app.services.market_data.polygon_client import fetch_stock_bars
 from app.services.market_data.yfinance_client import fetch_stock_bars_yf
+from app.services.schwab_client import get_price_history as schwab_get_history
+from app.core.redis import redis_client as _redis
+
+
+async def _schwab_authenticated() -> bool:
+    """Return True if a valid Schwab token exists in Redis."""
+    token = await _redis.get("schwab:token")
+    return token is not None
 
 
 async def ingest_price_data(ticker: str, asset_id: str, asset_type: str, db: AsyncSession) -> int:
     """Fetch OHLCV data for an asset and persist to price_history.
 
-    Returns the number of bars persisted.
-    Falls back to yfinance for stocks when POLYGON_API_KEY is not configured.
+    Source priority:
+      crypto  → Binance (real-time, free)
+      forex   → yFinance (15 min delay)
+      stocks  → Schwab if authenticated (real-time)
+               → Polygon if key configured (real-time)
+               → yFinance fallback (15 min delay)
     """
     if asset_type == "crypto":
         try:
             bars = await fetch_crypto_bars(ticker)
             source = "binance"
         except Exception:
-            # Binance rejected the symbol (e.g. a forex pair saved with wrong type).
-            # Fall back to yfinance so the user still gets data.
             bars = await fetch_stock_bars_yf(ticker)
             source = "yfinance"
     elif asset_type == "forex":
-        # Forex always uses yfinance (_to_yf_ticker maps EURUSD → EURUSD=X internally)
         bars = await fetch_stock_bars_yf(ticker)
         source = "yfinance"
+    elif await _schwab_authenticated():
+        # Schwab authenticated → real-time institutional data
+        bars = await schwab_get_history(ticker)
+        if not bars:
+            # Schwab failed (e.g. market closed, ticker not found) → fallback
+            logger.warning("Schwab returned no data for %s, falling back to yFinance", ticker)
+            bars = await fetch_stock_bars_yf(ticker)
+            source = "yfinance"
+        else:
+            source = "schwab"
     elif settings.polygon_api_key:
         bars = await fetch_stock_bars(ticker)
         source = "polygon"
     else:
-        # Free fallback — no API key required
+        # Free fallback — 15 min delay
         bars = await fetch_stock_bars_yf(ticker)
         source = "yfinance"
 

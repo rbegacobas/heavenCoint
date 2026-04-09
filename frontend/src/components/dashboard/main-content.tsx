@@ -23,6 +23,7 @@ import { useOscillators } from "@/hooks/use-oscillators";
 import {
   KpiSnapshot,
   OscillatorsResponse,
+  DataSource,
   TrendDirection,
   VolatilityState,
   MomentumClass,
@@ -53,6 +54,32 @@ function EmptyState() {
   );
 }
 
+// ── Data Source Badge ─────────────────────────────────────────────────────────
+
+function DataSourceBadge({ source }: { source: DataSource }) {
+  const isRealTime = source === "schwab" || source === "binance" || source === "polygon";
+
+  if (isRealTime) {
+    const label = source === "schwab" ? "Schwab RT" : source === "binance" ? "Binance RT" : "Polygon RT";
+    return (
+      <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5">
+        <span className="h-1.5 w-1.5 rounded-full bg-hc-accent-green animate-pulse" />
+        <span className="text-[9px] font-bold text-hc-accent-green">{label}</span>
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="flex items-center gap-1 rounded-full bg-yellow-50 px-2 py-0.5"
+      title="Datos con 15 minutos de retraso. Conecta Schwab para tiempo real."
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-hc-accent-yellow" />
+      <span className="text-[9px] font-bold text-hc-accent-yellow">15 MIN DELAY</span>
+    </span>
+  );
+}
+
 // ── Asset Header ──────────────────────────────────────────────────────────────
 
 function AssetHeader({ snapshot }: { snapshot: KpiSnapshot }) {
@@ -71,6 +98,7 @@ function AssetHeader({ snapshot }: { snapshot: KpiSnapshot }) {
           {snapshot.ticker}
         </span>
         <span className="text-xs text-hc-text-muted">{date}</span>
+        <DataSourceBadge source={snapshot.data_source ?? "yfinance"} />
         <button className="flex items-center gap-1.5 rounded-md bg-hc-accent-green px-3 py-1.5">
           <ImageIcon className="h-3.5 w-3.5 text-white" />
           <span className="text-[11px] font-semibold text-white">Ver imagen</span>

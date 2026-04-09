@@ -59,6 +59,8 @@ export interface KpiTrends {
   divergence: boolean;
 }
 
+export type DataSource = "schwab" | "polygon" | "binance" | "yfinance" | "unknown";
+
 export interface KpiSnapshot {
   ticker: string;
   source: "cache" | "calculated";
@@ -69,6 +71,7 @@ export interface KpiSnapshot {
   momentum: KpiMomentum;
   trends: KpiTrends;
   last_updated: string | null;
+  data_source: DataSource;
 }
 
 // ── Macro Indicators ──────────────────────────────────────────────────────────

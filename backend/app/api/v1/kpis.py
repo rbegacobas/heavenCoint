@@ -55,6 +55,7 @@ async def get_kpis(
                 "divergence": cached["trend_divergence"] == "true",
             },
             "last_updated": cached.get("last_updated"),
+            "data_source": cached.get("data_source", "unknown"),
         }
 
     # Not cached — compute from DB
@@ -96,6 +97,7 @@ async def get_kpis(
             "d50": kpis.get("trend_50d"),
             "divergence": kpis["trend_divergence"],
         },
+        "data_source": kpis.get("data_source", "yfinance"),
     }
 
 
