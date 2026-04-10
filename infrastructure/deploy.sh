@@ -71,14 +71,14 @@ cd "$APP_DIR"
 echo "[7/8] Setting up SSL certificate..."
 
 # Start nginx with HTTP-only config first for ACME challenge
-docker compose -f docker-compose.prod.yml up -d nginx certbot
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d nginx certbot
 
 sleep 5
 
 # Check if cert already exists
 if [ ! -f "/var/lib/docker/volumes/heavencoint_certbot-certs/_data/live/$DOMAIN/fullchain.pem" ]; then
     echo "  Requesting Let's Encrypt certificate..."
-    docker compose -f docker-compose.prod.yml run --rm certbot certonly \
+    docker compose -f docker-compose.prod.yml --env-file .env.production run --rm certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
         --email "$EMAIL" \
@@ -92,7 +92,7 @@ fi
 
 # ── 8. Launch all services ────────────────────────────────────
 echo "[8/8] Launching all services..."
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 
 echo ""
 echo "════════════════════════════════════════════"
