@@ -149,19 +149,16 @@ async def load_asset(
     """
     ticker = ticker.upper()
 
-    # Find or auto-create the asset in DB
-    result = await db.execute(select(Asset).where(Asset.ticker == ticker))
-    asset = result.scalar_one_or_none()
-
-    if asset is None:
-        asset_type = _detect_asset_type(ticker)
-        asset = await ensure_asset_exists(
-            ticker=ticker,
-            name=ticker,  # placeholder name; updated after successful data fetch
-            asset_type=asset_type,
-            exchange=None,
-            db=db,
-        )
+    # Find or auto-create the asset in DB.
+    # Always re-detect asset_type so stale/wrong types (e.g. EUR-USD saved as crypto) get fixed.
+    asset_type = _detect_asset_type(ticker)
+    asset = await ensure_asset_exists(
+        ticker=ticker,
+        name=ticker,
+        asset_type=asset_type,
+        exchange=None,
+        db=db,
+    )
 
     # Ingest price data
     try:
