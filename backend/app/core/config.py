@@ -1,6 +1,14 @@
 """Heaven Coint Backend — Core Configuration."""
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_INSECURE_KEYS = {
+    "change-me-to-a-random-64-char-string",
+    "secret",
+    "changeme",
+    "",
+}
 
 
 class Settings(BaseSettings):
@@ -26,6 +34,18 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60
     jwt_refresh_token_expire_days: int = 7
+
+    @field_validator("secret_key")
+    @classmethod
+    def secret_key_must_be_secure(cls, v: str) -> str:
+        if v in _INSECURE_KEYS or len(v) < 32:
+            import os
+            if os.getenv("APP_ENV", "development") == "production":
+                raise ValueError(
+                    "SECRET_KEY must be a random string of at least 32 characters in production. "
+                    "Generate one with: python3 -c \"import secrets; print(secrets.token_hex(32))\""
+                )
+        return v
 
     # Database
     postgres_user: str = "heavencoint"
@@ -81,6 +101,10 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",")]
+
+    @property
+    def is_production(self) -> bool:
+        return self.app_env == "production"
 
 
 settings = Settings()
