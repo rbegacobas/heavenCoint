@@ -52,28 +52,35 @@ async def search_assets(
     for asset in db_result.scalars():
         results.append(AssetSearchResult.model_validate(asset))
 
-    # 2. If less than 5 local results, also search external APIs
+    # 2. If less than 5 local results, search external APIs (DO NOT auto-save to DB)
+    # Assets are saved to DB only when explicitly loaded via POST /assets/{ticker}/load
+    _MAJOR_EXCHANGES = {"NASDAQ", "NYSE", "XNYS", "XNAS", "BINANCE"}
+
     if len(results) < 5:
         if asset_type in (None, "stock"):
             try:
                 if settings.polygon_api_key:
-                    external = await search_stock_tickers(q, limit=5)
+                    external = await search_stock_tickers(q, limit=10)
                 elif settings.twelvedata_api_key:
-                    external = await search_stock_tickers_td(q, limit=5)
+                    external = await search_stock_tickers_td(q, limit=10)
                 else:
-                    external = await search_stock_tickers_yf(q, limit=5)
+                    external = await search_stock_tickers_yf(q, limit=10)
+
                 for item in external:
-                    if not any(r.ticker == item["ticker"] for r in results):
-                        # Persist to local DB for future lookups
-                        # item["type"] can be "stock", "etf", or "forex"
-                        asset = await ensure_asset_exists(
-                            ticker=item["ticker"],
-                            name=item["name"],
-                            asset_type=item.get("type", "stock"),
-                            exchange=item.get("exchange"),
-                            db=db,
-                        )
-                        results.append(AssetSearchResult.model_validate(asset))
+                    if any(r.ticker == item["ticker"] for r in results):
+                        continue
+                    # Only show results from major exchanges to avoid JSE/IDX/NSE noise
+                    exchange = item.get("exchange", "") or ""
+                    if exchange not in _MAJOR_EXCHANGES and settings.twelvedata_api_key:
+                        continue
+                    results.append(AssetSearchResult(
+                        id=None,  # type: ignore[arg-type]
+                        ticker=item["ticker"],
+                        name=item["name"],
+                        asset_type=item.get("type", "stock"),
+                        exchange=exchange or None,
+                        currency=None,
+                    ))
             except Exception:
                 logger.warning("Stock search API failed for query: %s", q)
 
@@ -82,14 +89,14 @@ async def search_assets(
                 external = await search_crypto_tickers(q, limit=5)
                 for item in external:
                     if not any(r.ticker == item["ticker"] for r in results):
-                        asset = await ensure_asset_exists(
+                        results.append(AssetSearchResult(
+                            id=None,  # type: ignore[arg-type]
                             ticker=item["ticker"],
                             name=item["name"],
                             asset_type="crypto",
                             exchange="BINANCE",
-                            db=db,
-                        )
-                        results.append(AssetSearchResult.model_validate(asset))
+                            currency=None,
+                        ))
             except Exception:
                 logger.warning("Crypto search API failed for query: %s", q)
 

@@ -7,11 +7,12 @@ from pydantic import BaseModel
 
 
 class AssetSearchResult(BaseModel):
-    id: uuid.UUID
+    id: uuid.UUID | None = None
     ticker: str
     name: str
     asset_type: str
     exchange: str | None = None
+    currency: str | None = None
 
     model_config = {"from_attributes": True}
 
