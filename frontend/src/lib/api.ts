@@ -56,6 +56,12 @@ export async function request<T>(
   const res = await fetch(`${BASE}${path}`, { ...fetchOpts, headers });
 
   if (!res.ok) {
+    // Token expired or invalid — clear session and redirect to login
+    if (res.status === 401 && auth && typeof window !== "undefined") {
+      clearToken();
+      window.location.href = "/login";
+      throw new ApiError(401, "Sesión expirada. Por favor inicia sesión de nuevo.");
+    }
     const body = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
     throw new ApiError(res.status, body.detail ?? `HTTP ${res.status}`);
   }
