@@ -59,7 +59,11 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - internal
+      - internal   # DB + Redis
+      - external   # Internet access (yFinance, FRED, Schwab, Binance, OpenAI)
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
       interval: 30s
