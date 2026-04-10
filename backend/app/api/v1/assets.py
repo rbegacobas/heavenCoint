@@ -21,6 +21,7 @@ from app.schemas.asset import (
 from app.services.market_data.binance_client import search_crypto_tickers
 from app.services.market_data.ingestion import ensure_asset_exists, ingest_price_data
 from app.services.market_data.polygon_client import search_stock_tickers
+from app.services.market_data.twelvedata_client import search_stock_tickers_td
 from app.services.market_data.yfinance_client import search_stock_tickers_yf
 
 router = APIRouter(prefix="/assets", tags=["assets"])
@@ -55,11 +56,12 @@ async def search_assets(
     if len(results) < 5:
         if asset_type in (None, "stock"):
             try:
-                external = (
-                    await search_stock_tickers(q, limit=5)
-                    if settings.polygon_api_key
-                    else await search_stock_tickers_yf(q, limit=5)
-                )
+                if settings.polygon_api_key:
+                    external = await search_stock_tickers(q, limit=5)
+                elif settings.twelvedata_api_key:
+                    external = await search_stock_tickers_td(q, limit=5)
+                else:
+                    external = await search_stock_tickers_yf(q, limit=5)
                 for item in external:
                     if not any(r.ticker == item["ticker"] for r in results):
                         # Persist to local DB for future lookups

@@ -83,6 +83,7 @@ class Settings(BaseSettings):
     polygon_api_key: str = ""
     binance_api_key: str = ""
     binance_api_secret: str = ""
+    twelvedata_api_key: str = ""
 
     # FRED
     fred_api_key: str = ""

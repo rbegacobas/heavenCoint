@@ -17,6 +17,7 @@ from app.models.price_history import PriceHistory
 from app.services.market_data.binance_client import fetch_crypto_bars
 from app.services.market_data.fred_client import fetch_all_indicators
 from app.services.market_data.polygon_client import fetch_stock_bars
+from app.services.market_data.twelvedata_client import fetch_stock_bars_td
 from app.services.market_data.yfinance_client import fetch_stock_bars_yf
 from app.services.schwab_client import get_price_history as schwab_get_history
 from app.core.redis import redis_client as _redis
@@ -61,8 +62,11 @@ async def ingest_price_data(ticker: str, asset_id: str, asset_type: str, db: Asy
     elif settings.polygon_api_key:
         bars = await fetch_stock_bars(ticker)
         source = "polygon"
+    elif settings.twelvedata_api_key:
+        bars = await fetch_stock_bars_td(ticker)
+        source = "twelvedata"
     else:
-        # Free fallback — 15 min delay
+        # Last resort — yfinance (blocked on most cloud VPS IPs)
         bars = await fetch_stock_bars_yf(ticker)
         source = "yfinance"
 
