@@ -103,18 +103,36 @@ async def search_assets(
     return {"results": results[:10], "count": len(results[:10])}
 
 
+_FIAT_CODES = {
+    "EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD", "HKD", "SGD",
+    "SEK", "NOK", "DKK", "MXN", "BRL", "ZAR", "INR", "CNY", "TRY",
+    "USD", "RUB", "PLN", "CZK", "HUF", "ILS", "KRW", "TWD", "THB",
+}
+
+
 def _detect_asset_type(ticker: str) -> str:
     """Infer asset type from ticker format.
 
-    BTC-USD, ETH-USD  → crypto  (ends with -USD and known crypto pattern)
-    EURUSD, GBPJPY    → forex   (exactly 6 uppercase alpha chars)
+    EUR-USD, GBP-JPY  → forex  (fiat-fiat pair with hyphen)
+    EURUSD, GBPJPY    → forex  (exactly 6 uppercase alpha chars, both halves fiat)
+    BTC-USD, ETH-USDT → crypto (ends with -USD/-USDT, first part is crypto)
     everything else   → stock
     """
     t = ticker.upper()
-    if t.endswith("-USD") or t.endswith("-USDT"):
-        return "crypto"
-    if len(t) == 6 and t.isalpha():
+
+    # Hyphenated pair: EUR-USD, GBP-JPY, USD-JPY
+    if "-" in t:
+        parts = t.split("-")
+        if len(parts) == 2 and parts[0] in _FIAT_CODES and parts[1] in _FIAT_CODES:
+            return "forex"
+        # ends with -USD or -USDT but first part is NOT fiat → crypto
+        if t.endswith("-USD") or t.endswith("-USDT"):
+            return "crypto"
+
+    # Classic 6-char forex: EURUSD, GBPJPY
+    if len(t) == 6 and t.isalpha() and t[:3] in _FIAT_CODES and t[3:] in _FIAT_CODES:
         return "forex"
+
     return "stock"
 
 

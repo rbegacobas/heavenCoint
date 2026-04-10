@@ -47,8 +47,12 @@ async def ingest_price_data(ticker: str, asset_id: str, asset_type: str, db: Asy
             bars = await fetch_stock_bars_yf(ticker)
             source = "yfinance"
     elif asset_type == "forex":
-        bars = await fetch_stock_bars_yf(ticker)
-        source = "yfinance"
+        if settings.twelvedata_api_key:
+            bars = await fetch_stock_bars_td(ticker)
+            source = "twelvedata"
+        else:
+            bars = await fetch_stock_bars_yf(ticker)
+            source = "yfinance"
     elif await _schwab_authenticated():
         # Schwab authenticated → real-time institutional data
         bars = await schwab_get_history(ticker)

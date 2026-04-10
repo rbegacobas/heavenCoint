@@ -24,6 +24,21 @@ def _is_configured() -> bool:
     return bool(settings.twelvedata_api_key)
 
 
+def _to_td_symbol(ticker: str) -> str:
+    """Convert internal ticker format to Twelve Data symbol format.
+
+    EUR-USD → EUR/USD  (forex hyphen → slash)
+    EURUSD  → EUR/USD  (6-char forex → slash)
+    NVDA    → NVDA     (stocks unchanged)
+    """
+    t = ticker.upper()
+    if "-" in t and len(t) == 7:  # EUR-USD style
+        return t.replace("-", "/")
+    if len(t) == 6 and t.isalpha():  # EURUSD style
+        return f"{t[:3]}/{t[3:]}"
+    return t
+
+
 async def fetch_stock_bars_td(ticker: str, period_days: int = 365 * 2) -> list[dict]:
     """Download OHLCV bars from Twelve Data.
 
@@ -36,7 +51,7 @@ async def fetch_stock_bars_td(ticker: str, period_days: int = 365 * 2) -> list[d
     start_date = (datetime.utcnow() - timedelta(days=period_days)).strftime("%Y-%m-%d")
 
     params = {
-        "symbol": ticker,
+        "symbol": _to_td_symbol(ticker),
         "interval": "1day",
         "start_date": start_date,
         "outputsize": 5000,
